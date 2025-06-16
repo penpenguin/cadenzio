@@ -1,0 +1,482 @@
+---
+---
+
+<html lang="ja">
+  <head>
+    <meta charset="utf-8" />
+    <link rel="icon" type="image/svg+xml" href="/cadenzio/favicon.svg" />
+    <meta name="viewport" content="width=device-width" />
+    <meta name="generator" content={Astro.generator} />
+    <title>Cadenzio - 音楽ループプレイヤー</title>
+    <meta name="description" content="ローカル音楽ファイルの任意区間を無限ループ再生できるWebアプリケーション" />
+    
+    <!-- PWA -->
+    <link rel="manifest" href="/cadenzio/manifest.json" />
+    <meta name="theme-color" content="#5e4bb6" />
+    
+    <!-- noUiSlider CSS -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/noUiSlider/15.7.1/nouislider.min.css" />
+  </head>
+  <body>
+    <div class="app-container">
+      <!-- Header -->
+      <header class="app-header">
+        <h1>Cadenzio</h1>
+        <button class="settings-btn" aria-label="設定">
+          <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <circle cx="12" cy="12" r="3"></circle>
+            <path d="M12 1v6m0 6v6m9-9h-6m-6 0H3m16.2-7.2l-4.2 4.2m-6 6l-4.2 4.2m0-10.4l4.2 4.2m6 6l4.2 4.2"></path>
+          </svg>
+        </button>
+      </header>
+
+      <!-- Main Content -->
+      <main class="app-main">
+        <!-- File Selection Area -->
+        <section class="file-section">
+          <div class="file-drop-zone" id="dropZone">
+            <input type="file" id="fileInput" accept="audio/*" hidden />
+            <svg class="upload-icon" width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path>
+              <polyline points="17 8 12 3 7 8"></polyline>
+              <line x1="12" y1="3" x2="12" y2="15"></line>
+            </svg>
+            <p class="file-drop-text">
+              音楽ファイルをドラッグ&ドロップ<br />
+              または<button class="file-select-btn" type="button">ファイルを選択</button>
+            </p>
+          </div>
+          <div class="file-info" id="fileInfo" hidden>
+            <p class="file-name" id="fileName"></p>
+            <button class="file-clear-btn" type="button" aria-label="ファイルをクリア">×</button>
+          </div>
+        </section>
+
+        <!-- Player Controls -->
+        <section class="player-section" id="playerSection" hidden>
+          <!-- Play Controls -->
+          <div class="player-controls">
+            <button class="play-btn" id="playBtn" aria-label="再生">
+              <svg class="play-icon" width="32" height="32" viewBox="0 0 24 24" fill="currentColor">
+                <path d="M8 5v14l11-7z"></path>
+              </svg>
+              <svg class="pause-icon" hidden width="32" height="32" viewBox="0 0 24 24" fill="currentColor">
+                <rect x="6" y="4" width="4" height="16"></rect>
+                <rect x="14" y="4" width="4" height="16"></rect>
+              </svg>
+            </button>
+            
+            <div class="time-display">
+              <span id="currentTime">0:00</span> / <span id="duration">0:00</span>
+            </div>
+            
+            <div class="volume-control">
+              <button class="mute-btn" id="muteBtn" aria-label="ミュート">
+                <svg class="volume-icon" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                  <polygon points="11 5 6 9 2 9 2 15 6 15 11 19 11 5"></polygon>
+                  <path d="M23 9l-6 6m0-6l6 6" class="mute-path" hidden></path>
+                </svg>
+              </button>
+              <input type="range" class="volume-slider" id="volumeSlider" min="0" max="100" value="50" aria-label="音量" />
+            </div>
+          </div>
+
+          <!-- Progress Bar -->
+          <div class="progress-container">
+            <div class="progress-bar" id="progressBar">
+              <div class="progress-fill" id="progressFill"></div>
+            </div>
+          </div>
+
+          <!-- Loop Controls -->
+          <div class="loop-controls">
+            <h3>ループ区間</h3>
+            <div class="loop-slider-container">
+              <div id="loopSlider"></div>
+            </div>
+            <div class="loop-info">
+              <span>開始: <span id="loopStart">0:00</span></span>
+              <button class="loop-reset-btn" id="loopResetBtn" type="button">ループ解除</button>
+              <span>終了: <span id="loopEnd">0:00</span></span>
+            </div>
+          </div>
+        </section>
+      </main>
+
+      <!-- Footer -->
+      <footer class="app-footer">
+        <p>&copy; 2025 Cadenzio. Built with <a href="https://astro.build" target="_blank" rel="noopener">Astro</a></p>
+      </footer>
+    </div>
+
+    <!-- Error Toast -->
+    <div class="error-toast" id="errorToast" role="alert" aria-live="polite" hidden>
+      <p class="error-message" id="errorMessage"></p>
+    </div>
+
+    <!-- Load noUiSlider -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/noUiSlider/15.7.1/nouislider.min.js"></script>
+    
+    <!-- Main App Script -->
+    <script src="/cadenzio/scripts/app.js" type="module"></script>
+    
+    <!-- Service Worker Registration -->
+    <script>
+      if ('serviceWorker' in navigator) {
+        window.addEventListener('load', () => {
+          navigator.serviceWorker.register('/cadenzio/sw.js')
+            .then(registration => console.log('SW registered:', registration))
+            .catch(error => console.log('SW registration failed:', error));
+        });
+      }
+    </script>
+  </body>
+</html>
+
+<style>
+  * {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+  }
+
+  :root {
+    --color-primary: #5e4bb6;
+    --color-primary-dark: #4a3c91;
+    --color-secondary: #e74c3c;
+    --color-bg: #1a1a2e;
+    --color-surface: #2d2d44;
+    --color-text: #eee;
+    --color-text-dim: #aaa;
+    --radius: 8px;
+    --shadow: 0 4px 6px rgba(0, 0, 0, 0.3);
+  }
+
+  body {
+    font-family: system-ui, -apple-system, sans-serif;
+    background: var(--color-bg);
+    color: var(--color-text);
+    min-height: 100vh;
+    display: flex;
+    flex-direction: column;
+  }
+
+  .app-container {
+    display: flex;
+    flex-direction: column;
+    min-height: 100vh;
+  }
+
+  .app-header {
+    background: var(--color-surface);
+    padding: 1rem 2rem;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    box-shadow: var(--shadow);
+  }
+
+  .app-header h1 {
+    font-size: 1.5rem;
+    font-weight: 600;
+  }
+
+  .settings-btn {
+    background: none;
+    border: none;
+    color: var(--color-text);
+    cursor: pointer;
+    padding: 0.5rem;
+    border-radius: var(--radius);
+    transition: background 0.2s;
+  }
+
+  .settings-btn:hover {
+    background: rgba(255, 255, 255, 0.1);
+  }
+
+  .app-main {
+    flex: 1;
+    padding: 2rem;
+    max-width: 800px;
+    margin: 0 auto;
+    width: 100%;
+  }
+
+  .file-section {
+    margin-bottom: 2rem;
+  }
+
+  .file-drop-zone {
+    background: var(--color-surface);
+    border: 2px dashed var(--color-primary);
+    border-radius: var(--radius);
+    padding: 3rem;
+    text-align: center;
+    cursor: pointer;
+    transition: all 0.3s;
+  }
+
+  .file-drop-zone.dragover {
+    background: rgba(94, 75, 182, 0.1);
+    border-color: var(--color-primary);
+  }
+
+  .upload-icon {
+    margin-bottom: 1rem;
+    opacity: 0.7;
+  }
+
+  .file-drop-text {
+    color: var(--color-text-dim);
+    line-height: 1.6;
+  }
+
+  .file-select-btn {
+    background: var(--color-primary);
+    color: white;
+    border: none;
+    padding: 0.5rem 1rem;
+    border-radius: var(--radius);
+    cursor: pointer;
+    margin-top: 0.5rem;
+    transition: background 0.2s;
+  }
+
+  .file-select-btn:hover {
+    background: var(--color-primary-dark);
+  }
+
+  .file-info {
+    background: var(--color-surface);
+    padding: 1rem;
+    border-radius: var(--radius);
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-top: 1rem;
+  }
+
+  .file-clear-btn {
+    background: none;
+    border: none;
+    color: var(--color-text-dim);
+    font-size: 1.5rem;
+    cursor: pointer;
+    width: 32px;
+    height: 32px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border-radius: 50%;
+    transition: all 0.2s;
+  }
+
+  .file-clear-btn:hover {
+    background: rgba(255, 255, 255, 0.1);
+    color: var(--color-text);
+  }
+
+  .player-section {
+    background: var(--color-surface);
+    padding: 2rem;
+    border-radius: var(--radius);
+    box-shadow: var(--shadow);
+  }
+
+  .player-controls {
+    display: flex;
+    align-items: center;
+    gap: 1.5rem;
+    margin-bottom: 1.5rem;
+  }
+
+  .play-btn {
+    background: var(--color-primary);
+    border: none;
+    width: 56px;
+    height: 56px;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    transition: all 0.2s;
+    color: white;
+  }
+
+  .play-btn:hover {
+    background: var(--color-primary-dark);
+    transform: scale(1.05);
+  }
+
+  .time-display {
+    font-variant-numeric: tabular-nums;
+    color: var(--color-text-dim);
+  }
+
+  .volume-control {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    margin-left: auto;
+  }
+
+  .mute-btn {
+    background: none;
+    border: none;
+    color: var(--color-text);
+    cursor: pointer;
+    padding: 0.5rem;
+  }
+
+  .volume-slider {
+    width: 100px;
+  }
+
+  .progress-container {
+    margin-bottom: 2rem;
+  }
+
+  .progress-bar {
+    background: rgba(255, 255, 255, 0.1);
+    height: 6px;
+    border-radius: 3px;
+    cursor: pointer;
+    position: relative;
+  }
+
+  .progress-fill {
+    background: var(--color-primary);
+    height: 100%;
+    border-radius: 3px;
+    width: 0;
+    transition: width 0.1s;
+  }
+
+  .loop-controls h3 {
+    font-size: 1.1rem;
+    margin-bottom: 1rem;
+  }
+
+  .loop-slider-container {
+    margin-bottom: 1rem;
+  }
+
+  .loop-info {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    color: var(--color-text-dim);
+    font-size: 0.9rem;
+  }
+
+  .loop-reset-btn {
+    background: rgba(255, 255, 255, 0.1);
+    border: none;
+    color: var(--color-text);
+    padding: 0.25rem 0.75rem;
+    border-radius: var(--radius);
+    cursor: pointer;
+    transition: background 0.2s;
+  }
+
+  .loop-reset-btn:hover {
+    background: rgba(255, 255, 255, 0.2);
+  }
+
+  .app-footer {
+    background: var(--color-surface);
+    padding: 1rem;
+    text-align: center;
+    color: var(--color-text-dim);
+    font-size: 0.9rem;
+  }
+
+  .app-footer a {
+    color: var(--color-primary);
+    text-decoration: none;
+  }
+
+  .app-footer a:hover {
+    text-decoration: underline;
+  }
+
+  .error-toast {
+    position: fixed;
+    bottom: 2rem;
+    right: 2rem;
+    background: var(--color-secondary);
+    color: white;
+    padding: 1rem 1.5rem;
+    border-radius: var(--radius);
+    box-shadow: var(--shadow);
+    animation: slideIn 0.3s ease-out;
+  }
+
+  @keyframes slideIn {
+    from {
+      transform: translateX(100%);
+    }
+    to {
+      transform: translateX(0);
+    }
+  }
+
+  /* noUiSlider Custom Styles */
+  .noUi-target {
+    background: rgba(255, 255, 255, 0.1);
+    border: none;
+    box-shadow: none;
+    height: 8px;
+  }
+
+  .noUi-connect {
+    background: var(--color-primary);
+  }
+
+  .noUi-handle {
+    background: white;
+    border: none;
+    box-shadow: var(--shadow);
+    width: 20px;
+    height: 20px;
+    right: -10px;
+    top: -6px;
+  }
+
+  .noUi-handle:before,
+  .noUi-handle:after {
+    display: none;
+  }
+
+  .noUi-tooltip {
+    background: var(--color-bg);
+    color: var(--color-text);
+    border: 1px solid var(--color-primary);
+    border-radius: var(--radius);
+    padding: 0.25rem 0.5rem;
+    font-size: 0.85rem;
+  }
+
+  /* Responsive */
+  @media (max-width: 640px) {
+    .app-main {
+      padding: 1rem;
+    }
+
+    .player-controls {
+      flex-wrap: wrap;
+    }
+
+    .volume-control {
+      width: 100%;
+      margin-left: 0;
+      margin-top: 1rem;
+    }
+
+    .volume-slider {
+      flex: 1;
+    }
+  }
+</style>
