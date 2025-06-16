@@ -144,17 +144,34 @@
     --color-primary: #5e4bb6;
     --color-primary-dark: #4a3c91;
     --color-secondary: #e74c3c;
-    --color-bg: #1a1a2e;
-    --color-surface: #2d2d44;
+    --color-bg: #0f0f23;
+    --color-surface: rgba(255, 255, 255, 0.05);
+    --color-surface-hover: rgba(255, 255, 255, 0.08);
+    --color-glass: rgba(255, 255, 255, 0.1);
+    --color-glass-border: rgba(255, 255, 255, 0.2);
     --color-text: #eee;
     --color-text-dim: #aaa;
-    --radius: 8px;
-    --shadow: 0 4px 6px rgba(0, 0, 0, 0.3);
+    --radius: 12px;
+    --shadow: 0 8px 32px rgba(0, 0, 0, 0.5);
+    --shadow-glass: 0 4px 16px rgba(0, 0, 0, 0.2);
+    --blur: 10px;
+  }
+
+  /* Fallback styles for browsers without backdrop-filter support */
+  @supports not (backdrop-filter: blur(10px)) {
+    :root {
+      --color-glass: rgba(45, 45, 68, 0.95);
+      --color-surface: rgba(45, 45, 68, 0.9);
+    }
   }
 
   body {
     font-family: system-ui, -apple-system, sans-serif;
     background: var(--color-bg);
+    background-image: 
+      radial-gradient(circle at 20% 80%, rgba(94, 75, 182, 0.3) 0%, transparent 50%),
+      radial-gradient(circle at 80% 20%, rgba(231, 76, 60, 0.3) 0%, transparent 50%),
+      radial-gradient(circle at 40% 40%, rgba(94, 75, 182, 0.2) 0%, transparent 50%);
     color: var(--color-text);
     min-height: 100vh;
     display: flex;
@@ -168,12 +185,15 @@
   }
 
   .app-header {
-    background: var(--color-surface);
+    background: var(--color-glass);
+    backdrop-filter: blur(var(--blur));
+    -webkit-backdrop-filter: blur(var(--blur));
+    border: 1px solid var(--color-glass-border);
     padding: 1rem 2rem;
     display: flex;
     justify-content: space-between;
     align-items: center;
-    box-shadow: var(--shadow);
+    box-shadow: var(--shadow-glass);
   }
 
   .app-header h1 {
@@ -192,7 +212,7 @@
   }
 
   .settings-btn:hover {
-    background: rgba(255, 255, 255, 0.1);
+    background: var(--color-surface-hover);
   }
 
   .app-main {
@@ -208,18 +228,22 @@
   }
 
   .file-drop-zone {
-    background: var(--color-surface);
-    border: 2px dashed var(--color-primary);
+    background: var(--color-glass);
+    backdrop-filter: blur(var(--blur));
+    -webkit-backdrop-filter: blur(var(--blur));
+    border: 2px dashed var(--color-glass-border);
     border-radius: var(--radius);
     padding: 3rem;
     text-align: center;
     cursor: pointer;
     transition: all 0.3s;
+    box-shadow: var(--shadow-glass);
   }
 
   .file-drop-zone.dragover {
-    background: rgba(94, 75, 182, 0.1);
+    background: rgba(94, 75, 182, 0.2);
     border-color: var(--color-primary);
+    box-shadow: 0 0 20px rgba(94, 75, 182, 0.3);
   }
 
   .upload-icon {
@@ -233,28 +257,36 @@
   }
 
   .file-select-btn {
-    background: var(--color-primary);
+    background: rgba(94, 75, 182, 0.8);
+    backdrop-filter: blur(var(--blur));
+    -webkit-backdrop-filter: blur(var(--blur));
     color: white;
-    border: none;
+    border: 1px solid rgba(94, 75, 182, 0.5);
     padding: 0.5rem 1rem;
     border-radius: var(--radius);
     cursor: pointer;
     margin-top: 0.5rem;
-    transition: background 0.2s;
+    transition: all 0.2s;
+    box-shadow: 0 2px 8px rgba(94, 75, 182, 0.3);
   }
 
   .file-select-btn:hover {
-    background: var(--color-primary-dark);
+    background: rgba(94, 75, 182, 0.9);
+    box-shadow: 0 4px 12px rgba(94, 75, 182, 0.4);
   }
 
   .file-info {
-    background: var(--color-surface);
+    background: var(--color-glass);
+    backdrop-filter: blur(var(--blur));
+    -webkit-backdrop-filter: blur(var(--blur));
+    border: 1px solid var(--color-glass-border);
     padding: 1rem;
     border-radius: var(--radius);
     display: flex;
     justify-content: space-between;
     align-items: center;
     margin-top: 1rem;
+    box-shadow: var(--shadow-glass);
   }
 
   .file-clear-btn {
@@ -273,15 +305,18 @@
   }
 
   .file-clear-btn:hover {
-    background: rgba(255, 255, 255, 0.1);
+    background: var(--color-surface-hover);
     color: var(--color-text);
   }
 
   .player-section {
-    background: var(--color-surface);
+    background: var(--color-glass);
+    backdrop-filter: blur(var(--blur));
+    -webkit-backdrop-filter: blur(var(--blur));
+    border: 1px solid var(--color-glass-border);
     padding: 2rem;
     border-radius: var(--radius);
-    box-shadow: var(--shadow);
+    box-shadow: var(--shadow-glass);
   }
 
   .player-controls {
@@ -292,8 +327,10 @@
   }
 
   .play-btn {
-    background: var(--color-primary);
-    border: none;
+    background: rgba(94, 75, 182, 0.8);
+    backdrop-filter: blur(var(--blur));
+    -webkit-backdrop-filter: blur(var(--blur));
+    border: 1px solid rgba(94, 75, 182, 0.5);
     width: 56px;
     height: 56px;
     border-radius: 50%;
@@ -303,11 +340,13 @@
     cursor: pointer;
     transition: all 0.2s;
     color: white;
+    box-shadow: 0 4px 16px rgba(94, 75, 182, 0.4);
   }
 
   .play-btn:hover {
-    background: var(--color-primary-dark);
+    background: rgba(94, 75, 182, 0.9);
     transform: scale(1.05);
+    box-shadow: 0 6px 20px rgba(94, 75, 182, 0.5);
   }
 
   .time-display {
@@ -328,10 +367,54 @@
     color: var(--color-text);
     cursor: pointer;
     padding: 0.5rem;
+    border-radius: var(--radius);
+    transition: background 0.2s;
+  }
+
+  .mute-btn:hover {
+    background: var(--color-surface-hover);
   }
 
   .volume-slider {
     width: 100px;
+    -webkit-appearance: none;
+    appearance: none;
+    background: transparent;
+    cursor: pointer;
+  }
+
+  .volume-slider::-webkit-slider-track {
+    background: rgba(255, 255, 255, 0.1);
+    height: 4px;
+    border-radius: 2px;
+  }
+
+  .volume-slider::-webkit-slider-thumb {
+    -webkit-appearance: none;
+    appearance: none;
+    background: white;
+    width: 16px;
+    height: 16px;
+    border-radius: 50%;
+    margin-top: -6px;
+    cursor: pointer;
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.3);
+  }
+
+  .volume-slider::-moz-range-track {
+    background: rgba(255, 255, 255, 0.1);
+    height: 4px;
+    border-radius: 2px;
+  }
+
+  .volume-slider::-moz-range-thumb {
+    background: white;
+    width: 16px;
+    height: 16px;
+    border-radius: 50%;
+    border: none;
+    cursor: pointer;
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.3);
   }
 
   .progress-container {
@@ -340,10 +423,13 @@
 
   .progress-bar {
     background: rgba(255, 255, 255, 0.1);
+    backdrop-filter: blur(var(--blur));
+    -webkit-backdrop-filter: blur(var(--blur));
     height: 6px;
     border-radius: 3px;
     cursor: pointer;
     position: relative;
+    box-shadow: inset 0 1px 3px rgba(0, 0, 0, 0.3);
   }
 
   .progress-fill {
@@ -372,21 +458,27 @@
   }
 
   .loop-reset-btn {
-    background: rgba(255, 255, 255, 0.1);
-    border: none;
+    background: var(--color-glass);
+    backdrop-filter: blur(var(--blur));
+    -webkit-backdrop-filter: blur(var(--blur));
+    border: 1px solid var(--color-glass-border);
     color: var(--color-text);
     padding: 0.25rem 0.75rem;
     border-radius: var(--radius);
     cursor: pointer;
-    transition: background 0.2s;
+    transition: all 0.2s;
   }
 
   .loop-reset-btn:hover {
-    background: rgba(255, 255, 255, 0.2);
+    background: var(--color-surface-hover);
+    border-color: rgba(255, 255, 255, 0.3);
   }
 
   .app-footer {
-    background: var(--color-surface);
+    background: var(--color-glass);
+    backdrop-filter: blur(var(--blur));
+    -webkit-backdrop-filter: blur(var(--blur));
+    border-top: 1px solid var(--color-glass-border);
     padding: 1rem;
     text-align: center;
     color: var(--color-text-dim);
@@ -406,11 +498,14 @@
     position: fixed;
     bottom: 2rem;
     right: 2rem;
-    background: var(--color-secondary);
+    background: rgba(231, 76, 60, 0.9);
+    backdrop-filter: blur(var(--blur));
+    -webkit-backdrop-filter: blur(var(--blur));
+    border: 1px solid rgba(231, 76, 60, 0.5);
     color: white;
     padding: 1rem 1.5rem;
     border-radius: var(--radius);
-    box-shadow: var(--shadow);
+    box-shadow: 0 8px 32px rgba(231, 76, 60, 0.3);
     animation: slideIn 0.3s ease-out;
   }
 
@@ -426,8 +521,10 @@
   /* noUiSlider Custom Styles */
   .noUi-target {
     background: rgba(255, 255, 255, 0.1);
-    border: none;
-    box-shadow: none;
+    backdrop-filter: blur(var(--blur));
+    -webkit-backdrop-filter: blur(var(--blur));
+    border: 1px solid rgba(255, 255, 255, 0.05);
+    box-shadow: inset 0 1px 3px rgba(0, 0, 0, 0.3);
     height: 8px;
   }
 
@@ -436,13 +533,25 @@
   }
 
   .noUi-handle {
-    background: white;
-    border: none;
-    box-shadow: var(--shadow);
+    background: rgba(255, 255, 255, 0.9);
+    backdrop-filter: blur(var(--blur));
+    -webkit-backdrop-filter: blur(var(--blur));
+    border: 1px solid rgba(255, 255, 255, 0.3);
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.3);
     width: 20px;
     height: 20px;
     right: -10px;
     top: -6px;
+    cursor: grab;
+  }
+
+  .noUi-handle:hover {
+    background: white;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.4);
+  }
+
+  .noUi-handle:active {
+    cursor: grabbing;
   }
 
   .noUi-handle:before,
@@ -451,12 +560,15 @@
   }
 
   .noUi-tooltip {
-    background: var(--color-bg);
+    background: rgba(0, 0, 0, 0.8);
+    backdrop-filter: blur(var(--blur));
+    -webkit-backdrop-filter: blur(var(--blur));
     color: var(--color-text);
-    border: 1px solid var(--color-primary);
+    border: 1px solid rgba(255, 255, 255, 0.2);
     border-radius: var(--radius);
     padding: 0.25rem 0.5rem;
     font-size: 0.85rem;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.3);
   }
 
   /* Responsive */
