@@ -462,9 +462,13 @@
     transition: width 0.1s;
   }
 
+  .loop-controls {
+    margin-top: 1rem;
+  }
+
   .loop-controls h3 {
     font-size: 1.1rem;
-    margin-bottom: 1rem;
+    margin-bottom: 3rem;
   }
 
   .loop-slider-container {
@@ -500,7 +504,7 @@
   .waveform-container {
     position: relative;
     height: 120px;
-    margin: 1.5rem 0;
+    margin: 1.5rem 0 2rem 0;
     background: rgba(255, 255, 255, 0.05);
     border-radius: var(--radius);
     overflow: hidden;
@@ -650,6 +654,8 @@
     padding: 0.25rem 0.5rem;
     font-size: 0.85rem;
     box-shadow: 0 2px 8px rgba(0, 0, 0, 0.3);
+    z-index: 1000;
+    transform: translateY(-0.5rem);
   }
 
   /* Responsive */
@@ -658,19 +664,49 @@
       padding: 1rem;
     }
 
+    .file-section {
+      margin-bottom: 1.5rem;
+    }
+
+    .player-section {
+      padding: 1.5rem;
+    }
+
     .player-controls {
       flex-wrap: wrap;
+      gap: 1rem;
+      margin-bottom: 1rem;
     }
 
     .volume-control {
       width: 100%;
       margin-left: 0;
-      margin-top: 1rem;
+      margin-top: 0.75rem;
     }
 
     .volume-slider {
       flex: 1;
       max-width: 200px;
+    }
+
+    .progress-container {
+      margin-bottom: 1.5rem;
+    }
+
+    .waveform-container {
+      margin: 1rem 0 1.5rem 0;
+    }
+
+    .loop-controls {
+      margin-top: 0.75rem;
+    }
+
+    .loop-controls h3 {
+      margin-bottom: 2.5rem;
+    }
+
+    .loop-slider-container {
+      margin-bottom: 0.75rem;
     }
   }
 </style>
