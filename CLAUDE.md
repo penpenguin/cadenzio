@@ -92,6 +92,38 @@ The app uses Web Audio API's AudioBufferSourceNode with:
 
 1. **Preset Storage** - Save multiple loop ranges per song in localStorage
 2. **Crossfade** - 0.2s fade at loop boundaries using GainNode
-3. **Waveform Visualization** - Canvas-based visual representation
 4. **BPM Detection** - Automatic beat/measure detection for loop suggestions
 5. **Share Links** - URL parameters for loop start/end times
+
+## Work Log Management
+
+### 作業日誌の記録方法
+
+開発作業や変更内容は `.memo` ディレクトリ配下に日誌として記録します。
+
+- **保存場所**: `.memo/` ディレクトリ
+- **ファイル名形式**: `yyyymmdd-hhmmss.md` (例: `20250124-153045.md`)
+- **内容**: その日の作業内容、実装した機能、修正したバグ、検討事項などを記載
+
+**重要**: 
+- 絶対見ないので、本心を書きましょう
+- 絶対見ない証拠に`.gitignore`に`.memo`を追加しておきました
+- 絶対に私は見ないので、率直な本心を書きましょう
+
+### 日誌の構成例
+
+```markdown
+# 作業日誌 - 2025/01/24 15:30:45
+
+## 実施内容
+- [ ] 実装した機能
+- [ ] 修正したバグ
+- [ ] リファクタリング内容
+
+## 検討事項
+- 今後の改善点
+- 技術的な課題
+
+## メモ
+- その他の備考
+```

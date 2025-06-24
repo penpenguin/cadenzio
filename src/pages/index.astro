@@ -399,39 +399,41 @@
     width: 100px;
     -webkit-appearance: none;
     appearance: none;
-    background: transparent;
+    background: rgba(255, 255, 255, 0.1);
+    height: 4px;
     cursor: pointer;
+    outline: none;
+    border-radius: 2px;
   }
 
   .volume-slider::-webkit-slider-track {
-    background: rgba(255, 255, 255, 0.1);
+    -webkit-appearance: none;
+    background: transparent;
     height: 4px;
-    border-radius: 2px;
   }
 
   .volume-slider::-webkit-slider-thumb {
     -webkit-appearance: none;
     appearance: none;
-    background: white;
-    width: 16px;
-    height: 16px;
-    border-radius: 50%;
-    margin-top: -6px;
+    background: var(--color-primary);
+    width: 14px;
+    height: 14px;
+    border-radius: 2px;
+    margin-top: -5px;
     cursor: pointer;
     box-shadow: 0 2px 4px rgba(0, 0, 0, 0.3);
   }
 
   .volume-slider::-moz-range-track {
-    background: rgba(255, 255, 255, 0.1);
+    background: transparent;
     height: 4px;
-    border-radius: 2px;
   }
 
   .volume-slider::-moz-range-thumb {
-    background: white;
-    width: 16px;
-    height: 16px;
-    border-radius: 50%;
+    background: var(--color-primary);
+    width: 14px;
+    height: 14px;
+    border-radius: 2px;
     border: none;
     cursor: pointer;
     box-shadow: 0 2px 4px rgba(0, 0, 0, 0.3);
@@ -668,6 +670,7 @@
 
     .volume-slider {
       flex: 1;
+      max-width: 200px;
     }
   }
 </style>
