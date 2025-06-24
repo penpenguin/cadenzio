@@ -27,6 +27,7 @@ class AudioLoopPlayer {
     this.particles = [];
     this.frequencyData = null;
     this.bufferLength = 0;
+    this.lastClearTime = 0; // 最後に完全クリアした時間
     
     this.initializeElements();
     this.initializeEventListeners();
@@ -568,6 +569,9 @@ class AudioLoopPlayer {
   startVisualizer() {
     if (!this.visualizerCtx || this.animationId) return;
     
+    // タイマーを初期化
+    this.lastClearTime = Date.now();
+    
     const animate = () => {
       this.animationId = requestAnimationFrame(animate);
       this.drawVisualizer();
@@ -604,9 +608,16 @@ class AudioLoopPlayer {
     }
     average = average / this.bufferLength;
     
-    // Clear with fade effect
-    this.visualizerCtx.fillStyle = 'rgba(15, 15, 35, 0.1)';
-    this.visualizerCtx.fillRect(0, 0, width, height);
+    // 定期的な完全クリア（5秒ごと）
+    const currentTime = Date.now();
+    if (currentTime - this.lastClearTime > 5000) {
+      this.visualizerCtx.clearRect(0, 0, width, height);
+      this.lastClearTime = currentTime;
+    } else {
+      // 通常のフェード効果（元の軌跡効果）
+      this.visualizerCtx.fillStyle = 'rgba(15, 15, 35, 0.1)';
+      this.visualizerCtx.fillRect(0, 0, width, height);
+    }
     
     // Draw frequency bars
     const barWidth = width / this.bufferLength * 2.5;
