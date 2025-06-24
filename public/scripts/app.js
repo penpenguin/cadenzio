@@ -77,7 +77,10 @@ class AudioLoopPlayer {
 
   initializeEventListeners() {
     // File selection
-    this.fileSelectBtn.addEventListener('click', () => this.fileInput.click());
+    this.fileSelectBtn.addEventListener('click', (e) => {
+      e.stopPropagation();
+      this.fileInput.click();
+    });
     this.fileInput.addEventListener('change', (e) => this.handleFileSelect(e));
     this.fileClearBtn.addEventListener('click', () => this.clearFile());
     
