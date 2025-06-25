@@ -1,0 +1,12 @@
+/**
+ * Main stylesheet for Cadenzio
+ * Imports all component stylesheets
+ */
+
+@import './base.css';
+@import './layout.css';
+@import './components.css';
+@import './player.css';
+@import './sliders.css';
+@import './waveform.css';
+@import './responsive.css';

@@ -2,9 +2,7 @@ const CACHE_NAME = 'cadenzio-v1';
 const urlsToCache = [
   '/cadenzio/',
   '/cadenzio/scripts/app.js',
-  '/cadenzio/favicon.svg',
-  'https://cdnjs.cloudflare.com/ajax/libs/noUiSlider/15.7.1/nouislider.min.css',
-  'https://cdnjs.cloudflare.com/ajax/libs/noUiSlider/15.7.1/nouislider.min.js'
+  '/cadenzio/favicon.svg'
 ];
 
 self.addEventListener('install', event => {

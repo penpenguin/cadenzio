@@ -1,0 +1,61 @@
+/**
+ * Waveform visualization styles
+ */
+
+.waveform-container {
+  position: relative;
+  height: 120px;
+  margin: 1.5rem 0 2rem 0;
+  background: rgba(255, 255, 255, 0.05);
+  border-radius: var(--radius);
+  overflow: hidden;
+  backdrop-filter: blur(10px);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+.waveform-canvas {
+  width: 100%;
+  height: 100%;
+  display: block;
+  cursor: pointer;
+}
+
+.waveform-overlay {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  pointer-events: none;
+}
+
+.waveform-playhead {
+  position: absolute;
+  top: 0;
+  width: 2px;
+  height: 100%;
+  background: var(--color-primary);
+  box-shadow: 0 0 8px var(--color-primary);
+  transform: translateX(-50%);
+  opacity: 0;
+  transition: opacity 0.2s;
+}
+
+.waveform-playhead.active {
+  opacity: 1;
+}
+
+.waveform-loop-region {
+  position: absolute;
+  top: 0;
+  height: 100%;
+  background: rgba(94, 75, 182, 0.2);
+  border-left: 2px solid var(--color-primary);
+  border-right: 2px solid var(--color-primary);
+  opacity: 0;
+  transition: opacity 0.2s;
+}
+
+.waveform-loop-region.active {
+  opacity: 1;
+}

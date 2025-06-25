@@ -1,0 +1,50 @@
+/**
+ * Base styles and CSS custom properties
+ */
+
+* {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+}
+
+:root {
+  --color-primary: #5e4bb6;
+  --color-primary-dark: #4a3c91;
+  --color-secondary: #e74c3c;
+  --color-bg: #0f0f23;
+  --color-surface: rgba(255, 255, 255, 0.05);
+  --color-surface-hover: rgba(255, 255, 255, 0.08);
+  --color-glass: rgba(255, 255, 255, 0.1);
+  --color-glass-border: rgba(255, 255, 255, 0.2);
+  --color-text: #eee;
+  --color-text-dim: #aaa;
+  --radius: 12px;
+  --shadow: 0 8px 32px rgba(0, 0, 0, 0.5);
+  --shadow-glass: 0 4px 16px rgba(0, 0, 0, 0.2);
+  --blur: 10px;
+}
+
+/* Fallback styles for browsers without backdrop-filter support */
+@supports not (backdrop-filter: blur(10px)) {
+  :root {
+    --color-glass: rgba(45, 45, 68, 0.95);
+    --color-surface: rgba(45, 45, 68, 0.9);
+  }
+}
+
+body {
+  font-family: system-ui, -apple-system, sans-serif;
+  background: var(--color-bg);
+  color: var(--color-text);
+  min-height: 100vh;
+  display: flex;
+  flex-direction: column;
+  overflow-x: hidden;
+}
+
+.app-container {
+  display: flex;
+  flex-direction: column;
+  min-height: 100vh;
+}

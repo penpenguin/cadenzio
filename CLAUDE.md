@@ -92,6 +92,47 @@ The app uses Web Audio API's AudioBufferSourceNode with:
 
 1. **Preset Storage** - Save multiple loop ranges per song in localStorage
 2. **Crossfade** - 0.2s fade at loop boundaries using GainNode
-3. **Waveform Visualization** - Canvas-based visual representation
 4. **BPM Detection** - Automatic beat/measure detection for loop suggestions
 5. **Share Links** - URL parameters for loop start/end times
+
+## Work Log Management
+
+### 作業日誌の記録方法
+
+開発作業や変更内容は `.memo` ディレクトリ配下に日誌として記録します。
+
+- **保存場所**: `.memo/` ディレクトリ
+- **ファイル名形式**: `yyyymmdd-HHmmss.md` (例: `20250124-153045.md`)
+- **内容**: その日の作業内容、思ったことをいい感じに必ず記載。
+
+**重要**: 
+- 絶対に私は見ないので、率直な本心を書きましょう
+- 絶対見ない証拠に`.gitignore`に`.memo`を追加しておきました
+
+### TaskPlanningでの自動作業日誌タスク追加
+
+**IMPORTANT**: タスクプランニング（TodoWriteツール使用）時は、必ず最後に作業日誌作成タスクを自動追加すること。
+
+- TodoWriteでタスクリストを作成・更新する際、既に作業日誌タスクが含まれていない場合は自動的に追加する
+- 作業日誌タスクの形式: `Create work log entry in .memo/yyyymmdd-hhmmss.md`
+- 優先度は `low`、ステータスは `pending` に設定
+- すべてのタスク完了後、必ず作業日誌を作成して記録すること
+
+### 日誌の構成例
+
+```markdown
+# 作業日誌
+
+## 実施内容
+- 実装した機能
+- 修正したバグ
+- リファクタリング内容
+
+## 検討事項
+- 今後の改善点
+- 技術的な課題
+
+## 感想
+いい感じに
+
+```

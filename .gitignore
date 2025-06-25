@@ -27,3 +27,5 @@ dist/
 
 # local netlify folder
 .netlify
+
+.memo
