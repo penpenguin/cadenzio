@@ -60,7 +60,6 @@ class CadenzioApp {
       this.startProgressUpdates();
       
       this.isInitialized = true;
-      console.log('Cadenzio initialized successfully');
       
     } catch (error) {
       console.error('Failed to initialize Cadenzio:', error);
@@ -131,9 +130,6 @@ class CadenzioApp {
       
       // Initialize loop slider with delay to ensure DOM is ready
       setTimeout(() => {
-        console.log('Initializing loop slider from app.js');
-        console.log('Audio duration:', this.audioEngine.duration);
-        
         if (this.audioEngine.duration && this.audioEngine.duration > 0) {
           this.ui.initializeLoopSlider(
             this.audioEngine.duration,
@@ -143,8 +139,6 @@ class CadenzioApp {
           console.error('Invalid audio duration for loop slider:', this.audioEngine.duration);
         }
       }, 200); // Increased delay to ensure everything is ready
-      
-      console.log('File loaded successfully:', file.name);
       
     } catch (error) {
       console.error('Error loading file:', error);
@@ -164,8 +158,6 @@ class CadenzioApp {
     
     const loopStart = parseFloat(values[0]);
     const loopEnd = parseFloat(values[1]);
-    
-    console.log(`Loop updated: ${loopStart.toFixed(1)}s - ${loopEnd.toFixed(1)}s`);
     
     this.audioEngine.setLoopPoints(loopStart, loopEnd);
     this.ui.updateLoopDisplay(loopStart, loopEnd);

@@ -128,6 +128,8 @@ class UIController {
   updateVolumeSlider(value) {
     if (this.elements.volumeSlider) {
       this.elements.volumeSlider.value = value * 100;
+      // Update CSS variable for background gradient
+      this.elements.volumeSlider.style.setProperty('--slider-progress', (value * 100) + '%');
     }
   }
 
@@ -139,9 +141,6 @@ class UIController {
 
   // Loop UI methods
   initializeLoopSlider(duration, onUpdate) {
-    console.log('=== Loop Slider Initialization Start ===');
-    console.log('Duration:', duration, 'Type:', typeof duration);
-    
     if (!this.elements.loopSlider) {
       console.error('Loop slider element not found');
       return;
@@ -161,7 +160,6 @@ class UIController {
     
     // Completely destroy existing slider
     if (this.elements.loopSlider.noUiSlider) {
-      console.log('Destroying existing slider...');
       try {
         this.elements.loopSlider.noUiSlider.destroy();
         this.loopSlider = null;
@@ -180,11 +178,9 @@ class UIController {
     parent.replaceChild(newSlider, this.elements.loopSlider);
     this.elements.loopSlider = newSlider;
     
-    // Set initial values to make both handles visible
-    const initialStart = duration * 0.25; // 25% position
-    const initialEnd = duration * 0.75;   // 75% position
-    
-    console.log('Creating new slider with initial values: [', initialStart.toFixed(1), ',', initialEnd.toFixed(1), ']');
+    // Set initial values to span the entire audio range
+    const initialStart = 0; // Start position (0%)
+    const initialEnd = duration; // End position (100%)
     
     try {
       
@@ -211,8 +207,6 @@ class UIController {
         handles: 2
       };
       
-      console.log('Slider options:', sliderOptions);
-      
       noUiSlider.create(this.elements.loopSlider, sliderOptions);
       
       if (this.elements.loopSlider.noUiSlider) {
@@ -221,10 +215,6 @@ class UIController {
         
         // Verify handle count
         const handles = this.elements.loopSlider.querySelectorAll('.noUi-handle');
-        console.log('Number of handles created:', handles.length);
-        console.log('Initial values:', this.loopSlider.get());
-        
-        console.log('Loop slider initialized successfully');
       } else {
         console.error('noUiSlider instance not created');
       }
@@ -235,8 +225,6 @@ class UIController {
       // Fallback: Create simple range inputs
       this.createFallbackSlider(duration, onUpdate);
     }
-    
-    console.log('=== Loop Slider Initialization End ===');
   }
   
   // Fallback method if noUiSlider fails
@@ -279,7 +267,6 @@ class UIController {
     if (this.loopSlider) {
       try {
         this.loopSlider.set([0, duration]);
-        console.log('Loop slider reset to full duration');
       } catch (error) {
         console.error('Failed to reset loop slider:', error);
       }
@@ -400,6 +387,8 @@ class UIController {
     if (!onVolumeChange) return;
     
     const volume = e.target.value / 100;
+    // Update CSS variable for real-time visual feedback
+    e.target.style.setProperty('--slider-progress', e.target.value + '%');
     onVolumeChange(volume);
   }
 
