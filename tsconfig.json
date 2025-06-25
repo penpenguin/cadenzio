@@ -1,6 +1,35 @@
 {
   "extends": "astro/tsconfigs/base",
   "compilerOptions": {
-    "strictNullChecks": true
-  }
+    "target": "ES2022",
+    "module": "ESNext",
+    "moduleResolution": "bundler",
+    "allowImportingTsExtensions": true,
+    "resolveJsonModule": true,
+    "isolatedModules": true,
+    "noEmit": true,
+    "strict": true,
+    "strictNullChecks": true,
+    "noUnusedLocals": true,
+    "noUnusedParameters": true,
+    "noImplicitReturns": true,
+    "skipLibCheck": true,
+    "allowSyntheticDefaultImports": true,
+    "forceConsistentCasingInFileNames": true,
+    "baseUrl": ".",
+    "paths": {
+      "@/*": ["./src/*"],
+      "@/components/*": ["./src/components/*"],
+      "@/styles/*": ["./src/styles/*"],
+      "@/scripts/*": ["./public/scripts/*"]
+    }
+  },
+  "include": [
+    "src/**/*",
+    "public/scripts/**/*"
+  ],
+  "exclude": [
+    "node_modules",
+    "dist"
+  ]
 }
