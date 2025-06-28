@@ -8,6 +8,32 @@
   box-sizing: border-box;
 }
 
+[hidden] {
+  display: none !important;
+}
+
+/* Force hide for play/pause icons */
+.play-icon[hidden],
+.pause-icon[hidden] {
+  display: none !important;
+  visibility: hidden !important;
+  opacity: 0 !important;
+}
+
+/* Force show for visible play/pause icons - only when not explicitly hidden */
+.play-icon:not([hidden]):not([style*="display: none"]),
+.pause-icon:not([hidden]):not([style*="display: none"]) {
+  display: block !important;
+  visibility: visible !important;
+  opacity: 1 !important;
+}
+
+/* Override for explicitly hidden icons */
+.play-icon[style*="display: none"],
+.pause-icon[style*="display: none"] {
+  display: none !important;
+}
+
 :root {
   --color-primary: #5e4bb6;
   --color-primary-dark: #4a3c91;

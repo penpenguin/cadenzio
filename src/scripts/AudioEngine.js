@@ -69,8 +69,18 @@ class AudioEngine {
   /**
    * Start audio playback with current loop settings
    */
-  play() {
+  async play() {
     if (!this.audioBuffer) return;
+    
+    // Ensure audio context is initialized
+    if (!this.audioContext) {
+      await this.initialize();
+    }
+    
+    // Resume context if suspended
+    if (this.audioContext.state === 'suspended') {
+      await this.audioContext.resume();
+    }
     
     this.sourceNode = this.audioContext.createBufferSource();
     this.sourceNode.buffer = this.audioBuffer;

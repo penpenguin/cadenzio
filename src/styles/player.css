@@ -42,6 +42,20 @@
   box-shadow: 0 6px 20px rgba(94, 75, 182, 0.5);
 }
 
+.play-icon,
+.pause-icon {
+  position: absolute;
+  pointer-events: none;
+}
+
+.play-icon {
+  color: #ffffff;
+}
+
+.pause-icon {
+  color: #ffffff;
+}
+
 .time-display {
   font-variant-numeric: tabular-nums;
   color: var(--color-text-dim);

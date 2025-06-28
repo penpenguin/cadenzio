@@ -120,7 +120,6 @@ class CadenzioApp {
       
       // Update UI
       this.ui.setFileName(file.name);
-      this.ui.showFileInfo();
       this.ui.showPlayer();
       this.ui.updateDuration(formatTime(this.audioEngine.duration));
       
@@ -172,7 +171,6 @@ class CadenzioApp {
     this.audioVisualizer.stop();
     this.fileManager.clearFile();
     
-    this.ui.hideFileInfo();
     this.ui.hidePlayer();
     this.ui.clearFileInput();
     this.ui.updatePlayButton(false);
@@ -216,8 +214,8 @@ class CadenzioApp {
   /**
    * Start playback
    */
-  play() {
-    this.audioEngine.play();
+  async play() {
+    await this.audioEngine.play();
     this.ui.updatePlayButton(true);
     this.audioVisualizer.start(this.audioEngine);
   }

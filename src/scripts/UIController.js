@@ -48,6 +48,11 @@ class UIController {
     // Error elements
     this.elements.errorToast = document.getElementById('errorToast');
     this.elements.errorMessage = document.getElementById('errorMessage');
+    
+    // Modal elements
+    this.elements.settingsBtn = document.querySelector('.settings-btn');
+    this.elements.licenseModal = document.getElementById('licenseModal');
+    this.elements.licenseModalClose = document.getElementById('licenseModalClose');
   }
 
   initializeEventListeners() {
@@ -61,6 +66,28 @@ class UIController {
     this.elements.dropZone.addEventListener('click', () => {
       this.elements.fileInput.click();
     });
+    
+    // License modal
+    this.elements.settingsBtn.addEventListener('click', () => {
+      this.showLicenseModal();
+    });
+    
+    this.elements.licenseModalClose.addEventListener('click', () => {
+      this.hideLicenseModal();
+    });
+    
+    this.elements.licenseModal.addEventListener('click', (e) => {
+      if (e.target === this.elements.licenseModal) {
+        this.hideLicenseModal();
+      }
+    });
+    
+    // Escape key to close modal
+    document.addEventListener('keydown', (e) => {
+      if (e.key === 'Escape' && !this.elements.licenseModal.hidden) {
+        this.hideLicenseModal();
+      }
+    });
   }
 
   // File UI methods
@@ -68,16 +95,6 @@ class UIController {
     if (this.elements.fileName) {
       this.elements.fileName.textContent = name;
     }
-  }
-
-  showFileInfo() {
-    if (this.elements.dropZone) this.elements.dropZone.hidden = true;
-    if (this.elements.fileInfo) this.elements.fileInfo.hidden = false;
-  }
-
-  hideFileInfo() {
-    if (this.elements.dropZone) this.elements.dropZone.hidden = false;
-    if (this.elements.fileInfo) this.elements.fileInfo.hidden = true;
   }
 
   clearFileInput() {
@@ -103,6 +120,47 @@ class UIController {
     if (this.elements.playIcon && this.elements.pauseIcon) {
       this.elements.playIcon.hidden = isPlaying;
       this.elements.pauseIcon.hidden = !isPlaying;
+      
+      // Force style update with multiple methods
+      if (isPlaying) {
+        // Hide play icon, show pause icon
+        this.elements.playIcon.style.display = 'none';
+        this.elements.playIcon.style.visibility = 'hidden';
+        this.elements.playIcon.style.opacity = '0';
+        this.elements.playIcon.setAttribute('hidden', 'true');
+        
+        this.elements.pauseIcon.style.display = 'block';
+        this.elements.pauseIcon.style.visibility = 'visible';
+        this.elements.pauseIcon.style.opacity = '1';
+        this.elements.pauseIcon.removeAttribute('hidden');
+      } else {
+        // Show play icon, hide pause icon
+        this.elements.playIcon.style.display = 'block';
+        this.elements.playIcon.style.visibility = 'visible';
+        this.elements.playIcon.style.opacity = '1';
+        this.elements.playIcon.removeAttribute('hidden');
+        
+        this.elements.pauseIcon.style.display = 'none';
+        this.elements.pauseIcon.style.visibility = 'hidden';
+        this.elements.pauseIcon.style.opacity = '0';
+        this.elements.pauseIcon.setAttribute('hidden', 'true');
+      }
+    }
+    if (this.elements.playBtn) {
+      this.elements.playBtn.setAttribute('aria-label', isPlaying ? '一時停止' : '再生');
+    }
+  }
+  
+  // License modal methods
+  showLicenseModal() {
+    if (this.elements.licenseModal) {
+      this.elements.licenseModal.hidden = false;
+    }
+  }
+  
+  hideLicenseModal() {
+    if (this.elements.licenseModal) {
+      this.elements.licenseModal.hidden = true;
     }
   }
 

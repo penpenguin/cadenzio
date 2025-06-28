@@ -56,36 +56,35 @@
 }
 
 .file-info {
-  background: var(--color-glass);
-  backdrop-filter: blur(var(--blur));
-  -webkit-backdrop-filter: blur(var(--blur));
-  border: 1px solid var(--color-glass-border);
-  padding: 1rem;
-  border-radius: var(--radius);
   display: flex;
-  justify-content: space-between;
+  justify-content: center;
   align-items: center;
+  gap: 1rem;
   margin-top: 1rem;
-  box-shadow: var(--shadow-glass);
+}
+
+.file-name {
+  color: var(--color-text-dim);
+  font-size: 0.875rem;
 }
 
 .file-clear-btn {
   background: none;
   border: none;
   color: var(--color-text-dim);
-  font-size: 1.5rem;
+  font-size: 1.2rem;
   cursor: pointer;
-  width: 32px;
-  height: 32px;
+  width: 24px;
+  height: 24px;
   display: flex;
   align-items: center;
   justify-content: center;
-  border-radius: 50%;
   transition: all 0.2s;
+  opacity: 0.7;
 }
 
 .file-clear-btn:hover {
-  background: var(--color-surface-hover);
+  opacity: 1;
   color: var(--color-text);
 }
 
@@ -105,11 +104,127 @@
   animation: slideIn 0.3s ease-out;
 }
 
+/* License Modal */
+.modal-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background: rgba(0, 0, 0, 0.8);
+  backdrop-filter: blur(8px);
+  -webkit-backdrop-filter: blur(8px);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 1000;
+  animation: fadeIn 0.3s ease-out;
+}
+
+.modal-content {
+  background: var(--color-glass);
+  backdrop-filter: blur(var(--blur));
+  -webkit-backdrop-filter: blur(var(--blur));
+  border: 1px solid var(--color-glass-border);
+  border-radius: var(--radius);
+  max-width: 600px;
+  max-height: 80vh;
+  width: 90%;
+  box-shadow: var(--shadow-glass);
+  overflow: hidden;
+}
+
+.modal-header {
+  padding: 1.5rem;
+  border-bottom: 1px solid var(--color-glass-border);
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.modal-header h2 {
+  color: var(--color-text);
+  font-size: 1.5rem;
+  margin: 0;
+}
+
+.modal-close-btn {
+  background: none;
+  border: none;
+  color: var(--color-text-dim);
+  font-size: 2rem;
+  cursor: pointer;
+  width: 40px;
+  height: 40px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 50%;
+  transition: all 0.2s;
+}
+
+.modal-close-btn:hover {
+  background: var(--color-surface-hover);
+  color: var(--color-text);
+}
+
+.modal-body {
+  padding: 1.5rem;
+  overflow-y: auto;
+  max-height: calc(80vh - 100px);
+}
+
+.license-info h3 {
+  color: var(--color-text);
+  margin-bottom: 1rem;
+  font-size: 1.25rem;
+}
+
+.license-item {
+  background: rgba(255, 255, 255, 0.05);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  border-radius: 8px;
+  padding: 1rem;
+  margin-bottom: 1rem;
+}
+
+.license-item h4 {
+  color: var(--color-primary);
+  margin-bottom: 0.5rem;
+  font-size: 1.1rem;
+}
+
+.license-item p {
+  color: var(--color-text-dim);
+  margin-bottom: 0.25rem;
+  font-size: 0.9rem;
+}
+
+.license-item a {
+  color: var(--color-primary);
+  text-decoration: none;
+  transition: color 0.2s;
+}
+
+.license-item a:hover {
+  color: var(--color-primary-dark);
+  text-decoration: underline;
+}
+
 @keyframes slideIn {
   from {
     transform: translateX(100%);
   }
   to {
     transform: translateX(0);
+  }
+}
+
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
   }
 }
