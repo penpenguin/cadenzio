@@ -19,8 +19,12 @@ class FileManager {
   }
 
   async loadFile(file) {
-    if (!this.validateFile(file)) {
-      this.handleError(ERROR_MESSAGES.INVALID_FILE_TYPE);
+    const validationResult = this.validateFile(file);
+    
+    if (!validationResult.valid) {
+      if (validationResult.errorMessage) {
+        this.handleError(validationResult.errorMessage);
+      }
       return null;
     }
     
@@ -40,11 +44,13 @@ class FileManager {
   }
 
   validateFile(file) {
-    if (!file) return false;
+    if (!file || typeof file.type !== 'string') {
+      return { valid: false, errorMessage: ERROR_MESSAGES.INVALID_FILE_TYPE };
+    }
     
     // Check file type
     if (!file.type.startsWith('audio/')) {
-      return false;
+      return { valid: false, errorMessage: ERROR_MESSAGES.INVALID_FILE_TYPE };
     }
     
     // Check if format is supported
@@ -53,16 +59,15 @@ class FileManager {
     );
     
     if (!isSupported) {
-      return false;
+      return { valid: false, errorMessage: ERROR_MESSAGES.INVALID_FILE_TYPE };
     }
     
     // Check file size
     if (file.size > FILE_CONFIG.MAX_FILE_SIZE) {
-      this.handleError(ERROR_MESSAGES.FILE_TOO_LARGE);
-      return false;
+      return { valid: false, errorMessage: ERROR_MESSAGES.FILE_TOO_LARGE };
     }
     
-    return true;
+    return { valid: true };
   }
 
   readFileAsArrayBuffer(file) {
@@ -125,7 +130,12 @@ class FileManager {
       'fetch'
     ];
     
-    const unsupported = requiredAPIs.filter(api => !(api in window));
+    const unsupported = requiredAPIs.filter(api => {
+      if (api === 'AudioContext') {
+        return !(window.AudioContext || window.webkitAudioContext);
+      }
+      return !(api in window);
+    });
     
     if (unsupported.length > 0) {
       return {
@@ -134,7 +144,7 @@ class FileManager {
       };
     }
     
-    return { supported: true };
+    return { supported: true, missing: [] };
   }
 }
 
