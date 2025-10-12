@@ -51,7 +51,7 @@ export const FILE_CONFIG = {
     'audio/mp4',
     'audio/aac',
     'audio/flac',
-    'audio/webm'
+    'audio/webm',
   ],
 };
 
@@ -93,6 +93,24 @@ export const ERROR_MESSAGES = {
   AUDIO_PROCESSING_FAILED: '音声ファイルの処理に失敗しました',
   BROWSER_NOT_SUPPORTED: 'このブラウザは対応していません',
   INIT_FAILED: 'アプリケーションの初期化に失敗しました',
+  STORAGE_WRITE_FAILED: '設定の保存に失敗しました。ブラウザのストレージ設定を確認してください',
+};
+
+// Storage Configuration
+export const STORAGE_KEYS = {
+  PLAYER_STATE: 'cadenzio:player-state',
+};
+
+export const STORAGE_SCHEMA = {
+  VERSION: 1,
+  FIELDS: {
+    LOOP_START: 'loopStart',
+    LOOP_END: 'loopEnd',
+    PRESET_NAME: 'name',
+    VOLUME: 'volume',
+    IS_MUTED: 'isMuted',
+  },
+  DEFAULT_PRESET_NAME: 'Last Session',
 };
 
 // Development Configuration

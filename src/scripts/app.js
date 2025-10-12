@@ -8,34 +8,55 @@ import WaveformRenderer from './WaveformRenderer.js';
 import AudioVisualizer from './AudioVisualizer.js';
 import FileManager from './FileManager.js';
 import UIController from './UIController.js';
-import { formatTime, debounce, throttle } from './utils.js';
+import { formatTime, debounce } from './utils.js';
 import { KEYBOARD_SHORTCUTS, UI_CONFIG, ERROR_MESSAGES } from './constants.js';
+import PlayerStateManager from './PlayerStateManager.js';
 
 /**
  * Main application class that orchestrates all components
  */
 class CadenzioApp {
-  constructor() {
+  constructor({
+    audioEngine,
+    fileManager,
+    ui,
+    waveformRenderer,
+    audioVisualizer,
+    stateManager,
+  } = {}) {
     // Initialize core components
-    this.audioEngine = new AudioEngine();
-    this.fileManager = new FileManager();
-    this.ui = new UIController();
-    
+    this.audioEngine = audioEngine ?? new AudioEngine();
+    this.fileManager = fileManager ?? new FileManager();
+    this.ui = ui ?? new UIController();
+
     // Initialize visual components
-    this.waveformRenderer = new WaveformRenderer(
-      document.getElementById('waveformCanvas'),
-      document.getElementById('waveformPlayhead'),
-      document.getElementById('waveformLoopRegion')
-    );
-    
-    this.audioVisualizer = new AudioVisualizer(
-      document.getElementById('visualizerCanvas')
-    );
-    
+    this.waveformRenderer =
+      waveformRenderer ??
+      new WaveformRenderer(
+        document.getElementById('waveformCanvas'),
+        document.getElementById('waveformPlayhead'),
+        document.getElementById('waveformLoopRegion')
+      );
+
+    this.audioVisualizer =
+      audioVisualizer ?? new AudioVisualizer(document.getElementById('visualizerCanvas'));
+
+    this.stateManager =
+      stateManager ??
+      new PlayerStateManager({
+        audioEngine: this.audioEngine,
+        ui: this.ui,
+        onError: error => this.handleStorageError(error),
+      });
+    this.stateManager.onError = error => this.handleStorageError(error);
+    this.stateManager.audioEngine = this.audioEngine;
+    this.stateManager.ui = this.ui;
+
     // Application state
     this.isInitialized = false;
     this.updateIntervalId = null;
-    
+    this.pendingLoopState = null;
+
     this.initialize();
   }
 
@@ -47,20 +68,23 @@ class CadenzioApp {
       // Set up file manager callbacks
       this.fileManager.setCallbacks(
         (file, arrayBuffer) => this.handleFileLoad(file, arrayBuffer),
-        (error) => this.ui.showError(error)
+        error => this.ui.showError(error)
       );
-      
+
       // Set up waveform renderer callback
-      this.waveformRenderer.setSeekCallback((time) => this.audioEngine.seek(time));
-      
+      this.waveformRenderer?.setSeekCallback?.(time => this.audioEngine.seek(time));
+
       // Set up UI event listeners
       this.setupEventListeners();
-      
+
       // Start progress update loop
       this.startProgressUpdates();
-      
+
+      const hydratedState = this.stateManager.hydrate();
+      this.pendingLoopState = hydratedState;
+      this.refreshPresetUI();
+
       this.isInitialized = true;
-      
     } catch (error) {
       console.error('Failed to initialize Cadenzio:', error);
       this.ui.showError(ERROR_MESSAGES.INIT_FAILED);
@@ -72,32 +96,39 @@ class CadenzioApp {
    */
   setupEventListeners() {
     // File handling
-    this.ui.onFileSelect((e) => this.handleFileSelect(e));
+    this.ui.onFileSelect(e => this.handleFileSelect(e));
     this.ui.onFileClear(() => this.clearFile());
-    
+
     // Drag and drop
-    this.ui.onDragOver((e) => this.handleDragOver(e));
+    this.ui.onDragOver(e => this.handleDragOver(e));
     this.ui.onDragLeave(() => this.ui.removeDragOverStyle());
-    this.ui.onDrop((e) => this.handleDrop(e));
-    
+    this.ui.onDrop(e => this.handleDrop(e));
+
     // Player controls
     this.ui.onPlayToggle(() => this.togglePlayPause());
-    this.ui.onSeek((e) => this.handleSeek(e));
-    
+    this.ui.onSeek(e => this.handleSeek(e));
+
     // Volume controls
-    this.ui.onVolumeChange((e) => this.handleVolumeChange(e));
+    this.ui.onVolumeChange(e => this.handleVolumeChange(e));
     this.ui.onMuteToggle(() => this.toggleMute());
-    
+
     // Loop controls
     this.ui.onLoopReset(() => this.resetLoop());
-    
+    this.ui.onPresetSelect(e => this.handlePresetSelect(e));
+    this.ui.onPresetSave(() => this.handlePresetSave());
+    this.ui.onPresetDelete(() => this.handlePresetDelete());
+    this.ui.onPresetReset(() => this.handlePresetReset());
+
     // Keyboard shortcuts
-    this.ui.onKeyboard((e) => this.handleKeyboard(e));
-    
+    this.ui.onKeyboard(e => this.handleKeyboard(e));
+
     // Window resize (debounced)
-    window.addEventListener('resize', debounce(() => {
-      this.waveformRenderer.resize();
-    }, UI_CONFIG.DEBOUNCE_RESIZE_DELAY));
+    window.addEventListener(
+      'resize',
+      debounce(() => {
+        this.waveformRenderer?.resize?.();
+      }, UI_CONFIG.DEBOUNCE_RESIZE_DELAY)
+    );
   }
 
   /**
@@ -117,33 +148,50 @@ class CadenzioApp {
     try {
       // Load audio buffer
       const audioBuffer = await this.audioEngine.loadAudioBuffer(arrayBuffer);
-      
+
       // Update UI
       this.ui.setFileName(file.name);
       this.ui.showPlayer();
       this.ui.updateDuration(formatTime(this.audioEngine.duration));
-      
+
       // Setup waveform
-      this.waveformRenderer.resize();
-      this.waveformRenderer.generate(audioBuffer);
-      
+      this.waveformRenderer?.resize?.();
+      this.waveformRenderer?.generate?.(audioBuffer);
+
       // Initialize loop slider with delay to ensure DOM is ready
       setTimeout(() => {
         if (this.audioEngine.duration && this.audioEngine.duration > 0) {
-          this.ui.initializeLoopSlider(
-            this.audioEngine.duration,
-            (values) => this.handleLoopUpdate(values)
+          this.ui.initializeLoopSlider(this.audioEngine.duration, values =>
+            this.handleLoopUpdate(values)
           );
+          this.applyPendingLoopState();
         } else {
           console.error('Invalid audio duration for loop slider:', this.audioEngine.duration);
         }
       }, 200); // Increased delay to ensure everything is ready
-      
     } catch (error) {
       console.error('Error loading file:', error);
       this.ui.showError(ERROR_MESSAGES.AUDIO_PROCESSING_FAILED);
       this.clearFile();
     }
+  }
+
+  /**
+   * Apply persisted loop boundaries once the waveform and slider are ready.
+   */
+  applyPendingLoopState() {
+    if (!this.pendingLoopState) {
+      return;
+    }
+
+    const duration = this.audioEngine.duration || 0;
+    const loopStart = Math.max(0, Math.min(this.pendingLoopState.loopStart ?? 0, duration));
+    const desiredEnd = this.pendingLoopState.loopEnd ?? duration;
+    const loopEnd = Math.max(loopStart, Math.min(desiredEnd, duration || desiredEnd));
+
+    this.stateManager.updateLoop(loopStart, loopEnd);
+    this.waveformRenderer?.updateLoopRegion?.(loopStart, loopEnd);
+    this.pendingLoopState = null;
   }
 
   /**
@@ -154,13 +202,18 @@ class CadenzioApp {
       console.error('Invalid loop values:', values);
       return;
     }
-    
-    const loopStart = parseFloat(values[0]);
-    const loopEnd = parseFloat(values[1]);
-    
-    this.audioEngine.setLoopPoints(loopStart, loopEnd);
-    this.ui.updateLoopDisplay(loopStart, loopEnd);
-    this.waveformRenderer.updateLoopRegion(loopStart, loopEnd);
+
+    const duration = this.audioEngine.duration || 0;
+    const rawStart = parseFloat(values[0]);
+    const rawEnd = parseFloat(values[1]);
+    const loopStart = Number.isFinite(rawStart) ? Math.max(0, Math.min(rawStart, duration)) : 0;
+    const loopEndCandidate = Number.isFinite(rawEnd) ? rawEnd : duration;
+    const loopEnd = Math.max(loopStart, Math.min(loopEndCandidate, duration || loopEndCandidate));
+
+    this.stateManager.updateLoop(loopStart, loopEnd);
+    this.waveformRenderer?.updateLoopRegion?.(loopStart, loopEnd);
+    this.pendingLoopState = null;
+    this.refreshPresetUI();
   }
 
   /**
@@ -170,11 +223,12 @@ class CadenzioApp {
     this.audioEngine.stop();
     this.audioVisualizer.stop();
     this.fileManager.clearFile();
-    
+
     this.ui.hidePlayer();
     this.ui.clearFileInput();
     this.ui.updatePlayButton(false);
-    this.waveformRenderer.hidePlayhead();
+    this.waveformRenderer?.hidePlayhead?.();
+    this.refreshPresetUI();
   }
 
   /**
@@ -191,7 +245,7 @@ class CadenzioApp {
   async handleDrop(e) {
     e.preventDefault();
     this.ui.removeDragOverStyle();
-    
+
     const files = e.dataTransfer.files;
     if (files.length > 0) {
       await this.fileManager.loadFile(files[0]);
@@ -203,7 +257,7 @@ class CadenzioApp {
    */
   togglePlayPause() {
     if (!this.audioEngine.audioBuffer) return;
-    
+
     if (this.audioEngine.isPlaying) {
       this.pause();
     } else {
@@ -234,8 +288,8 @@ class CadenzioApp {
    */
   handleSeek(e) {
     if (!this.audioEngine.audioBuffer) return;
-    
-    this.ui.handleSeekClick(e, this.audioEngine.duration, (time) => {
+
+    this.ui.handleSeekClick(e, this.audioEngine.duration, time => {
       this.audioEngine.seek(time);
     });
   }
@@ -244,9 +298,8 @@ class CadenzioApp {
    * Handle volume changes
    */
   handleVolumeChange(e) {
-    this.ui.handleVolumeChange(e, (volume) => {
-      this.audioEngine.setVolume(volume);
-      this.ui.updateMuteButton(volume === 0);
+    this.ui.handleVolumeChange(e, volume => {
+      this.stateManager.updateVolume(volume);
     });
   }
 
@@ -254,9 +307,7 @@ class CadenzioApp {
    * Toggle mute
    */
   toggleMute() {
-    const newVolume = this.audioEngine.toggleMute();
-    this.ui.updateVolumeSlider(newVolume);
-    this.ui.updateMuteButton(newVolume === 0);
+    this.stateManager.toggleMute();
   }
 
   /**
@@ -264,8 +315,70 @@ class CadenzioApp {
    */
   resetLoop() {
     if (this.audioEngine.audioBuffer) {
-      this.ui.resetLoopSlider(this.audioEngine.duration);
+      const duration = this.audioEngine.duration || 0;
+      this.stateManager.updateLoop(0, duration);
+      this.waveformRenderer.updateLoopRegion(0, duration);
     }
+  }
+
+  handlePresetSave() {
+    const name = this.ui.getPresetName();
+    const preset = this.stateManager.createPreset({ name });
+    this.ui.clearPresetName();
+    this.refreshPresetUI();
+    if (preset) {
+      this.updateWaveformLoop(preset.loopStart, preset.loopEnd);
+    }
+  }
+
+  handlePresetSelect(event) {
+    const presetId = event?.target?.value;
+    if (!presetId) {
+      return;
+    }
+
+    const preset = this.stateManager.selectPreset(presetId);
+    this.refreshPresetUI();
+    if (preset) {
+      this.updateWaveformLoop(preset.loopStart, preset.loopEnd);
+    }
+  }
+
+  handlePresetDelete() {
+    const activeId = this.stateManager.state.activePresetId;
+    if (!activeId) {
+      return;
+    }
+
+    this.stateManager.deletePreset(activeId);
+    this.refreshPresetUI();
+    const preset = this.stateManager.getActivePreset();
+    this.updateWaveformLoop(preset.loopStart, preset.loopEnd);
+  }
+
+  handlePresetReset() {
+    this.stateManager.resetPresets();
+    this.refreshPresetUI();
+    const preset = this.stateManager.getActivePreset();
+    this.updateWaveformLoop(preset.loopStart, preset.loopEnd);
+    this.ui.clearPresetName();
+  }
+
+  refreshPresetUI() {
+    if (!this.ui.setPresetOptions) {
+      return;
+    }
+
+    const { presets, activePresetId } = this.stateManager.state;
+    this.ui.setPresetOptions(presets, activePresetId);
+    const activePreset = this.stateManager.getActivePreset();
+    this.ui.setPresetNamePlaceholder(activePreset?.name ?? 'プリセット名');
+  }
+
+  updateWaveformLoop(loopStart, loopEnd) {
+    const duration = this.audioEngine.duration || loopEnd || loopStart || 0;
+    const resolvedEnd = typeof loopEnd === 'number' ? loopEnd : duration;
+    this.waveformRenderer.updateLoopRegion(loopStart ?? 0, resolvedEnd);
   }
 
   /**
@@ -274,8 +387,8 @@ class CadenzioApp {
   handleKeyboard(e) {
     // Ignore if typing in input field
     if (e.target.tagName === 'INPUT') return;
-    
-    switch(e.key) {
+
+    switch (e.key) {
       case KEYBOARD_SHORTCUTS.PLAY_PAUSE:
         e.preventDefault();
         this.togglePlayPause();
@@ -305,26 +418,37 @@ class CadenzioApp {
       if (this.audioEngine.isPlaying) {
         const currentTime = this.audioEngine.getCurrentTime();
         const percentage = (currentTime / this.audioEngine.duration) * 100;
-        
+
         this.ui.updateCurrentTime(formatTime(currentTime));
         this.ui.updateProgress(percentage);
         this.waveformRenderer.updatePlayhead(currentTime);
       } else {
         this.waveformRenderer.hidePlayhead();
       }
-      
+
       requestAnimationFrame(updateProgress);
     };
-    
+
     updateProgress();
   }
+
+  /**
+   * Handle persisting errors gracefully.
+   * @param {Error} error
+   */
+  handleStorageError(error) {
+    console.error('Failed to persist player state:', error);
+    this.ui.showError(ERROR_MESSAGES.STORAGE_WRITE_FAILED);
+  }
 }
+
+export default CadenzioApp;
 
 // Initialize the application when DOM is ready
 document.addEventListener('DOMContentLoaded', () => {
   // Check browser compatibility
   const { supported, missing } = FileManager.checkBrowserSupport();
-  
+
   if (!supported) {
     console.error('Browser not supported. Missing APIs:', missing);
     const errorEl = document.getElementById('errorMessage');
@@ -334,7 +458,7 @@ document.addEventListener('DOMContentLoaded', () => {
     }
     return;
   }
-  
+
   // Initialize the application
   new CadenzioApp();
 });

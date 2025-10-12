@@ -31,11 +31,11 @@ export function debounce(func, wait, immediate = false) {
  */
 export function throttle(func, limit) {
   let inThrottle;
-  return function(...args) {
+  return function (...args) {
     if (!inThrottle) {
       func.apply(this, args);
       inThrottle = true;
-      setTimeout(() => inThrottle = false, limit);
+      setTimeout(() => (inThrottle = false), limit);
     }
   };
 }
@@ -47,7 +47,7 @@ export function throttle(func, limit) {
  */
 export function formatTime(seconds) {
   if (!seconds || isNaN(seconds)) return '0:00';
-  
+
   const mins = Math.floor(seconds / 60);
   const secs = Math.floor(seconds % 60);
   return `${mins}:${secs.toString().padStart(2, '0')}`;
@@ -60,11 +60,11 @@ export function formatTime(seconds) {
  */
 export function formatFileSize(bytes) {
   if (bytes === 0) return '0 Bytes';
-  
+
   const k = 1024;
   const sizes = ['Bytes', 'KB', 'MB', 'GB', 'TB'];
   const i = Math.floor(Math.log(bytes) / Math.log(k));
-  
+
   return parseFloat((bytes / Math.pow(k, i)).toFixed(2)) + ' ' + sizes[i];
 }
 
@@ -76,6 +76,9 @@ export function formatFileSize(bytes) {
  * @returns {number} Clamped value
  */
 export function clamp(value, min, max) {
+  if (typeof value !== 'number' || Number.isNaN(value)) {
+    return min;
+  }
   return Math.min(Math.max(value, min), max);
 }
 
@@ -100,7 +103,7 @@ export function lerp(start, end, factor) {
  * @returns {number} Mapped value
  */
 export function map(value, inMin, inMax, outMin, outMax) {
-  return (value - inMin) * (outMax - outMin) / (inMax - inMin) + outMin;
+  return ((value - inMin) * (outMax - outMin)) / (inMax - inMin) + outMin;
 }
 
 /**
@@ -108,23 +111,18 @@ export function map(value, inMin, inMax, outMin, outMax) {
  * @returns {Object} Support status and missing APIs
  */
 export function checkBrowserSupport() {
-  const requiredAPIs = [
-    'AudioContext',
-    'FileReader',
-    'requestAnimationFrame',
-    'fetch'
-  ];
-  
+  const requiredAPIs = ['AudioContext', 'FileReader', 'requestAnimationFrame', 'fetch'];
+
   const missing = requiredAPIs.filter(api => {
     if (api === 'AudioContext') {
       return !(window.AudioContext || window.webkitAudioContext);
     }
     return !(api in window);
   });
-  
+
   return {
     supported: missing.length === 0,
-    missing: missing
+    missing,
   };
 }
 
@@ -133,7 +131,7 @@ export function checkBrowserSupport() {
  * @returns {string} Unique identifier
  */
 export function generateId() {
-  return Date.now().toString(36) + Math.random().toString(36).substr(2);
+  return Date.now().toString(36) + Math.random().toString(36).slice(2);
 }
 
 /**
@@ -148,7 +146,7 @@ export function deepClone(obj) {
   if (typeof obj === 'object') {
     const cloned = {};
     for (const key in obj) {
-      if (obj.hasOwnProperty(key)) {
+      if (Object.prototype.hasOwnProperty.call(obj, key)) {
         cloned[key] = deepClone(obj[key]);
       }
     }
@@ -189,7 +187,7 @@ export function getFileExtension(filename) {
  */
 export function isValidAudioFile(file) {
   if (!file || !file.type) return false;
-  
+
   const validTypes = [
     'audio/mpeg',
     'audio/mp3',
@@ -198,9 +196,9 @@ export function isValidAudioFile(file) {
     'audio/mp4',
     'audio/aac',
     'audio/flac',
-    'audio/webm'
+    'audio/webm',
   ];
-  
+
   return validTypes.some(type => file.type.includes(type.split('/')[1]));
 }
 
@@ -211,12 +209,12 @@ export function isValidAudioFile(file) {
  */
 export function debouncedRaf(callback) {
   let rafId = null;
-  
-  return function(...args) {
+
+  return function (...args) {
     if (rafId) {
       cancelAnimationFrame(rafId);
     }
-    
+
     rafId = requestAnimationFrame(() => {
       callback.apply(this, args);
       rafId = null;

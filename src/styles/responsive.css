@@ -12,14 +12,35 @@
     margin-bottom: 1.5rem;
   }
 
+  .file-drop-zone {
+    padding: 1.25rem;
+  }
+
+  .file-drop-content {
+    flex-direction: column;
+    text-align: center;
+    gap: 1rem;
+  }
+
+  .file-select-btn {
+    margin-left: 0;
+    margin-top: 0.75rem;
+  }
+
   .player-section {
     padding: 1.5rem;
   }
 
-  .player-controls {
+  .player-top-row {
     flex-wrap: wrap;
     gap: 1rem;
     margin-bottom: 1rem;
+  }
+
+  .player-top-row .volume-control {
+    width: 100%;
+    margin-left: 0;
+    margin-top: 0.75rem;
   }
 
   .volume-control {
@@ -52,6 +73,16 @@
   .loop-slider-container {
     margin-bottom: 0.75rem;
   }
+
+  .preset-actions {
+    flex-direction: column;
+    align-items: stretch;
+  }
+
+  .preset-actions input,
+  .preset-actions .preset-btn {
+    width: 100%;
+  }
 }
 
 /* Tablet styles */
@@ -59,7 +90,7 @@
   .app-main {
     padding: 1.5rem;
   }
-  
+
   .player-section {
     padding: 1.75rem;
   }

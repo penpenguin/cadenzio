@@ -9,7 +9,8 @@ class UIController {
     this.elements = {};
     this.loopSlider = null;
     this.errorToastTimeout = null;
-    
+    this.pendingLoopHandles = null;
+
     this.initializeElements();
     this.initializeEventListeners();
   }
@@ -22,7 +23,7 @@ class UIController {
     this.elements.fileName = document.getElementById('fileName');
     this.elements.fileSelectBtn = document.querySelector('.file-select-btn');
     this.elements.fileClearBtn = document.querySelector('.file-clear-btn');
-    
+
     // Player elements
     this.elements.playerSection = document.getElementById('playerSection');
     this.elements.playBtn = document.getElementById('playBtn');
@@ -32,23 +33,28 @@ class UIController {
     this.elements.durationEl = document.getElementById('duration');
     this.elements.progressBar = document.getElementById('progressBar');
     this.elements.progressFill = document.getElementById('progressFill');
-    
+
     // Volume elements
     this.elements.muteBtn = document.getElementById('muteBtn');
     this.elements.volumeSlider = document.getElementById('volumeSlider');
     this.elements.volumeIcon = document.querySelector('.volume-icon');
     this.elements.mutePath = document.querySelector('.mute-path');
-    
+
     // Loop elements
     this.elements.loopSlider = document.getElementById('loopSlider');
     this.elements.loopStartEl = document.getElementById('loopStart');
     this.elements.loopEndEl = document.getElementById('loopEnd');
     this.elements.loopResetBtn = document.getElementById('loopResetBtn');
-    
+    this.elements.presetSelect = document.getElementById('presetSelect');
+    this.elements.presetNameInput = document.getElementById('presetNameInput');
+    this.elements.presetSaveBtn = document.getElementById('presetSaveBtn');
+    this.elements.presetDeleteBtn = document.getElementById('presetDeleteBtn');
+    this.elements.presetResetBtn = document.getElementById('presetResetBtn');
+
     // Error elements
     this.elements.errorToast = document.getElementById('errorToast');
     this.elements.errorMessage = document.getElementById('errorMessage');
-    
+
     // Modal elements
     this.elements.settingsBtn = document.querySelector('.settings-btn');
     this.elements.licenseModal = document.getElementById('licenseModal');
@@ -57,33 +63,33 @@ class UIController {
 
   initializeEventListeners() {
     // File selection
-    this.elements.fileSelectBtn.addEventListener('click', (e) => {
+    this.elements.fileSelectBtn.addEventListener('click', e => {
       e.stopPropagation();
       this.elements.fileInput.click();
     });
-    
+
     // Drag and drop
     this.elements.dropZone.addEventListener('click', () => {
       this.elements.fileInput.click();
     });
-    
+
     // License modal
     this.elements.settingsBtn.addEventListener('click', () => {
       this.showLicenseModal();
     });
-    
+
     this.elements.licenseModalClose.addEventListener('click', () => {
       this.hideLicenseModal();
     });
-    
-    this.elements.licenseModal.addEventListener('click', (e) => {
+
+    this.elements.licenseModal.addEventListener('click', e => {
       if (e.target === this.elements.licenseModal) {
         this.hideLicenseModal();
       }
     });
-    
+
     // Escape key to close modal
-    document.addEventListener('keydown', (e) => {
+    document.addEventListener('keydown', e => {
       if (e.key === 'Escape' && !this.elements.licenseModal.hidden) {
         this.hideLicenseModal();
       }
@@ -120,7 +126,7 @@ class UIController {
     if (this.elements.playIcon && this.elements.pauseIcon) {
       this.elements.playIcon.hidden = isPlaying;
       this.elements.pauseIcon.hidden = !isPlaying;
-      
+
       // Force style update with multiple methods
       if (isPlaying) {
         // Hide play icon, show pause icon
@@ -128,7 +134,7 @@ class UIController {
         this.elements.playIcon.style.visibility = 'hidden';
         this.elements.playIcon.style.opacity = '0';
         this.elements.playIcon.setAttribute('hidden', 'true');
-        
+
         this.elements.pauseIcon.style.display = 'block';
         this.elements.pauseIcon.style.visibility = 'visible';
         this.elements.pauseIcon.style.opacity = '1';
@@ -139,7 +145,7 @@ class UIController {
         this.elements.playIcon.style.visibility = 'visible';
         this.elements.playIcon.style.opacity = '1';
         this.elements.playIcon.removeAttribute('hidden');
-        
+
         this.elements.pauseIcon.style.display = 'none';
         this.elements.pauseIcon.style.visibility = 'hidden';
         this.elements.pauseIcon.style.opacity = '0';
@@ -150,14 +156,14 @@ class UIController {
       this.elements.playBtn.setAttribute('aria-label', isPlaying ? '一時停止' : '再生');
     }
   }
-  
+
   // License modal methods
   showLicenseModal() {
     if (this.elements.licenseModal) {
       this.elements.licenseModal.hidden = false;
     }
   }
-  
+
   hideLicenseModal() {
     if (this.elements.licenseModal) {
       this.elements.licenseModal.hidden = true;
@@ -187,13 +193,14 @@ class UIController {
     if (this.elements.volumeSlider) {
       this.elements.volumeSlider.value = value * 100;
       // Update CSS variable for background gradient
-      this.elements.volumeSlider.style.setProperty('--slider-progress', (value * 100) + '%');
+      this.elements.volumeSlider.style.setProperty('--slider-progress', value * 100 + '%');
     }
   }
 
   updateMuteButton(isMuted) {
     if (this.elements.mutePath) {
       this.elements.mutePath.hidden = !isMuted;
+      this.elements.mutePath.style.display = isMuted ? 'inline' : 'none';
     }
   }
 
@@ -203,19 +210,19 @@ class UIController {
       console.error('Loop slider element not found');
       return;
     }
-    
+
     // Validate duration
     if (typeof duration !== 'number' || duration <= 0 || !isFinite(duration)) {
       console.error('Invalid duration value:', duration);
       return;
     }
-    
+
     // Check if noUiSlider is available
     if (!noUiSlider) {
       console.error('noUiSlider is not loaded');
       return;
     }
-    
+
     // Completely destroy existing slider
     if (this.elements.loopSlider.noUiSlider) {
       try {
@@ -228,67 +235,71 @@ class UIController {
         console.warn('Error destroying existing slider:', error);
       }
     }
-    
+
     // Complete DOM reset - create a new element
     const parent = this.elements.loopSlider.parentNode;
     const newSlider = document.createElement('div');
     newSlider.id = 'loopSlider';
     parent.replaceChild(newSlider, this.elements.loopSlider);
     this.elements.loopSlider = newSlider;
-    
+
     // Set initial values to span the entire audio range
     const initialStart = 0; // Start position (0%)
     const initialEnd = duration; // End position (100%)
-    
+
     try {
-      
       const sliderOptions = {
         start: [initialStart, initialEnd], // Set handles at 25% and 75% initially
         connect: true, // Connect between handles
         range: {
-          'min': 0,
-          'max': duration
+          min: 0,
+          max: duration,
         },
         step: 0.1,
         tooltips: [
           {
-            to: (value) => this.formatTime(value)
+            to: value => this.formatTime(value),
           },
           {
-            to: (value) => this.formatTime(value)
-          }
+            to: value => this.formatTime(value),
+          },
         ],
         behaviour: 'tap-drag',
         orientation: 'horizontal',
         margin: 1, // Minimum distance between handles (1 second)
         // Explicitly set the number of handles
-        handles: 2
+        handles: 2,
       };
-      
+
       noUiSlider.create(this.elements.loopSlider, sliderOptions);
-      
+
       if (this.elements.loopSlider.noUiSlider) {
         this.elements.loopSlider.noUiSlider.on('update', onUpdate);
         this.loopSlider = this.elements.loopSlider.noUiSlider;
-        
-        // Verify handle count
-        const handles = this.elements.loopSlider.querySelectorAll('.noUi-handle');
+        if (this.pendingLoopHandles) {
+          try {
+            this.loopSlider.set(this.pendingLoopHandles);
+          } catch (error) {
+            console.warn('Failed to apply pending loop handles:', error);
+          }
+          this.pendingLoopHandles = null;
+        }
       } else {
         console.error('noUiSlider instance not created');
       }
     } catch (error) {
       console.error('Failed to initialize loop slider:', error);
       console.error('Error stack:', error.stack);
-      
+
       // Fallback: Create simple range inputs
       this.createFallbackSlider(duration, onUpdate);
     }
   }
-  
+
   // Fallback method if noUiSlider fails
   createFallbackSlider(duration, onUpdate) {
     console.warn('Creating fallback slider with native inputs');
-    
+
     const container = this.elements.loopSlider;
     container.innerHTML = `
       <div class="fallback-slider">
@@ -296,18 +307,15 @@ class UIController {
         <label>終了: <input type="range" id="loopEndRange" min="0" max="${duration}" step="0.1" value="${duration}"></label>
       </div>
     `;
-    
+
     const startInput = container.querySelector('#loopStartRange');
     const endInput = container.querySelector('#loopEndRange');
-    
+
     const updateHandler = () => {
-      const values = [
-        parseFloat(startInput.value),
-        parseFloat(endInput.value)
-      ];
+      const values = [parseFloat(startInput.value), parseFloat(endInput.value)];
       onUpdate(values);
     };
-    
+
     startInput.addEventListener('input', updateHandler);
     endInput.addEventListener('input', updateHandler);
   }
@@ -328,6 +336,20 @@ class UIController {
       } catch (error) {
         console.error('Failed to reset loop slider:', error);
       }
+    } else {
+      this.pendingLoopHandles = [0, duration];
+    }
+  }
+
+  setLoopHandles(start, end) {
+    if (this.loopSlider) {
+      try {
+        this.loopSlider.set([start, end]);
+      } catch (error) {
+        console.error('Failed to set loop slider handles:', error);
+      }
+    } else {
+      this.pendingLoopHandles = [start, end];
     }
   }
 
@@ -336,12 +358,12 @@ class UIController {
     if (this.elements.errorMessage && this.elements.errorToast) {
       this.elements.errorMessage.textContent = message;
       this.elements.errorToast.hidden = false;
-      
+
       // Clear existing timeout
       if (this.errorToastTimeout) {
         clearTimeout(this.errorToastTimeout);
       }
-      
+
       // Auto-hide after 5 seconds
       this.errorToastTimeout = setTimeout(() => {
         this.elements.errorToast.hidden = true;
@@ -420,6 +442,79 @@ class UIController {
     }
   }
 
+  onPresetSelect(callback) {
+    if (this.elements.presetSelect) {
+      this.elements.presetSelect.addEventListener('change', callback);
+    }
+  }
+
+  onPresetSave(callback) {
+    if (this.elements.presetSaveBtn) {
+      this.elements.presetSaveBtn.addEventListener('click', callback);
+    }
+  }
+
+  onPresetDelete(callback) {
+    if (this.elements.presetDeleteBtn) {
+      this.elements.presetDeleteBtn.addEventListener('click', callback);
+    }
+  }
+
+  onPresetReset(callback) {
+    if (this.elements.presetResetBtn) {
+      this.elements.presetResetBtn.addEventListener('click', callback);
+    }
+  }
+
+  setPresetOptions(presets, activePresetId) {
+    if (!this.elements.presetSelect) return;
+
+    this.elements.presetSelect.innerHTML = '';
+
+    if (!presets || presets.length === 0) {
+      const option = document.createElement('option');
+      option.value = '';
+      option.textContent = 'プリセットなし';
+      this.elements.presetSelect.appendChild(option);
+      this.elements.presetSelect.value = '';
+      return;
+    }
+
+    presets.forEach(preset => {
+      const option = document.createElement('option');
+      option.value = preset.id;
+      option.textContent = preset.name;
+      this.elements.presetSelect.appendChild(option);
+    });
+
+    this.elements.presetSelect.value = activePresetId ?? presets[0]?.id ?? '';
+  }
+
+  setPresetName(name) {
+    if (this.elements.presetNameInput) {
+      this.elements.presetNameInput.value = name ?? '';
+    }
+  }
+
+  getPresetName() {
+    if (this.elements.presetNameInput) {
+      return this.elements.presetNameInput.value.trim();
+    }
+    return '';
+  }
+
+  clearPresetName() {
+    if (this.elements.presetNameInput) {
+      this.elements.presetNameInput.value = '';
+    }
+  }
+
+  setPresetNamePlaceholder(name) {
+    if (this.elements.presetNameInput) {
+      this.elements.presetNameInput.placeholder = name ?? 'プリセット名';
+    }
+  }
+
   onKeyboard(callback) {
     document.addEventListener('keydown', callback);
   }
@@ -433,17 +528,17 @@ class UIController {
 
   handleSeekClick(e, duration, onSeek) {
     if (!this.elements.progressBar || !duration || !onSeek) return;
-    
+
     const rect = this.elements.progressBar.getBoundingClientRect();
     const percent = (e.clientX - rect.left) / rect.width;
     const time = percent * duration;
-    
+
     onSeek(time);
   }
 
   handleVolumeChange(e, onVolumeChange) {
     if (!onVolumeChange) return;
-    
+
     const volume = e.target.value / 100;
     // Update CSS variable for real-time visual feedback
     e.target.style.setProperty('--slider-progress', e.target.value + '%');

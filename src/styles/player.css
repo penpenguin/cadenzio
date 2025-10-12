@@ -12,11 +12,21 @@
   box-shadow: var(--shadow-glass);
 }
 
-.player-controls {
+.player-top-row {
   display: flex;
   align-items: center;
-  gap: 1.5rem;
+  gap: 1rem;
   margin-bottom: 1.5rem;
+  flex-wrap: wrap;
+}
+
+.player-top-row .file-info {
+  flex: 1 1 220px;
+}
+
+.player-top-row .time-display {
+  min-width: 110px;
+  text-align: center;
 }
 
 .play-btn {
@@ -54,6 +64,7 @@
 
 .pause-icon {
   color: #ffffff;
+  display: none;
 }
 
 .time-display {
@@ -109,7 +120,7 @@
 }
 
 .progress-fill::after {
-  content: '';
+  content: "";
   position: absolute;
   top: 0;
   right: 0;
@@ -118,4 +129,77 @@
   background: rgba(255, 255, 255, 0.8);
   border-radius: 0 3px 3px 0;
   box-shadow: 0 0 4px rgba(255, 255, 255, 0.4);
+}
+
+.preset-controls {
+  margin-top: 1.5rem;
+  padding: 1rem;
+  border-radius: var(--radius);
+  background: rgba(255, 255, 255, 0.03);
+  border: 1px solid rgba(255, 255, 255, 0.05);
+  display: grid;
+  gap: 0.75rem;
+}
+
+.preset-selection {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+}
+
+.preset-selection label {
+  color: var(--color-text-dim);
+  font-size: 0.85rem;
+  min-width: 72px;
+}
+
+.preset-selection select {
+  flex: 1;
+  min-width: 160px;
+  background: rgba(255, 255, 255, 0.05);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  border-radius: var(--radius);
+  color: var(--color-text);
+  padding: 0.4rem 0.75rem;
+}
+
+.preset-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+  align-items: center;
+}
+
+.preset-actions input {
+  flex: 1 1 180px;
+  min-width: 160px;
+  background: rgba(255, 255, 255, 0.05);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  border-radius: var(--radius);
+  color: var(--color-text);
+  padding: 0.45rem 0.75rem;
+}
+
+.preset-btn {
+  background: rgba(94, 75, 182, 0.7);
+  border: 1px solid rgba(94, 75, 182, 0.4);
+  color: white;
+  border-radius: var(--radius);
+  padding: 0.4rem 0.9rem;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.preset-btn:hover {
+  background: rgba(94, 75, 182, 0.85);
+}
+
+.preset-btn-secondary {
+  background: rgba(255, 255, 255, 0.1);
+  border: 1px solid rgba(255, 255, 255, 0.15);
+  color: var(--color-text);
+}
+
+.preset-btn-secondary:hover {
+  background: rgba(255, 255, 255, 0.2);
 }

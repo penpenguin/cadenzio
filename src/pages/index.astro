@@ -3,7 +3,7 @@ import '../styles/main.css';
 ---
 
 <script>
-import '../scripts/app.js';
+  import '../scripts/app.js';
 </script>
 
 <html lang="ja">
@@ -13,25 +13,35 @@ import '../scripts/app.js';
     <meta name="viewport" content="width=device-width" />
     <meta name="generator" content={Astro.generator} />
     <title>Cadenzio - 音楽ループプレイヤー</title>
-    <meta name="description" content="ローカル音楽ファイルの任意区間を無限ループ再生できるWebアプリケーション" />
-    
+    <meta
+      name="description"
+      content="ローカル音楽ファイルの任意区間を無限ループ再生できるWebアプリケーション"
+    />
+
     <!-- PWA -->
     <link rel="manifest" href="/cadenzio/manifest.json" />
     <meta name="theme-color" content="#5e4bb6" />
-    
-    
   </head>
   <body>
     <!-- Audio Visualizer Background -->
     <canvas id="visualizerCanvas" class="visualizer-canvas"></canvas>
-    
+
     <div class="app-container">
       <!-- Header -->
       <header class="app-header">
         <h1>Cadenzio</h1>
         <button class="settings-btn" aria-label="設定">
-          <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-            <path d="M12.22 2h-.44a2 2 0 0 0-2 2v.18a2 2 0 0 1-1 1.73l-.43.25a2 2 0 0 1-2 0l-.15-.08a2 2 0 0 0-2.73.73l-.22.38a2 2 0 0 0 .73 2.73l.15.1a2 2 0 0 1 1 1.72v.51a2 2 0 0 1-1 1.74l-.15.09a2 2 0 0 0-.73 2.73l.22.38a2 2 0 0 0 2.73.73l.15-.08a2 2 0 0 1 2 0l.43.25a2 2 0 0 1 1 1.73V20a2 2 0 0 0 2 2h.44a2 2 0 0 0 2-2v-.18a2 2 0 0 1 1-1.73l.43-.25a2 2 0 0 1 2 0l.15.08a2 2 0 0 0 2.73-.73l.22-.39a2 2 0 0 0-.73-2.73l-.15-.08a2 2 0 0 1-1-1.74v-.5a2 2 0 0 1 1-1.74l.15-.09a2 2 0 0 0 .73-2.73l-.22-.38a2 2 0 0 0-2.73-.73l-.15.08a2 2 0 0 1-2 0l-.43-.25a2 2 0 0 1-1-1.73V4a2 2 0 0 0-2-2z"></path>
+          <svg
+            width="24"
+            height="24"
+            viewBox="0 0 24 24"
+            fill="none"
+            stroke="currentColor"
+            stroke-width="2"
+          >
+            <path
+              d="M12.22 2h-.44a2 2 0 0 0-2 2v.18a2 2 0 0 1-1 1.73l-.43.25a2 2 0 0 1-2 0l-.15-.08a2 2 0 0 0-2.73.73l-.22.38a2 2 0 0 0 .73 2.73l.15.1a2 2 0 0 1 1 1.72v.51a2 2 0 0 1-1 1.74l-.15.09a2 2 0 0 0-.73 2.73l.22.38a2 2 0 0 0 2.73.73l.15-.08a2 2 0 0 1 2 0l.43.25a2 2 0 0 1 1 1.73V20a2 2 0 0 0 2 2h.44a2 2 0 0 0 2-2v-.18a2 2 0 0 1 1-1.73l.43-.25a2 2 0 0 1 2 0l.15.08a2 2 0 0 0 2.73-.73l.22-.39a2 2 0 0 0-.73-2.73l-.15-.08a2 2 0 0 1-1-1.74v-.5a2 2 0 0 1 1-1.74l.15-.09a2 2 0 0 0 .73-2.73l-.22-.38a2 2 0 0 0-2.73-.73l-.15.08a2 2 0 0 1-2 0l-.43-.25a2 2 0 0 1-1-1.73V4a2 2 0 0 0-2-2z"
+            ></path>
             <circle cx="12" cy="12" r="3"></circle>
           </svg>
         </button>
@@ -43,50 +53,84 @@ import '../scripts/app.js';
         <section class="file-section">
           <div class="file-drop-zone" id="dropZone">
             <input type="file" id="fileInput" accept="audio/*" hidden />
-            <svg class="upload-icon" width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-              <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path>
-              <polyline points="17 8 12 3 7 8"></polyline>
-              <line x1="12" y1="3" x2="12" y2="15"></line>
-            </svg>
-            <p class="file-drop-text">
-              音楽ファイルをドラッグ&ドロップ<br />
-              または<button class="file-select-btn" type="button">ファイルを選択</button>
-            </p>
+            <div class="file-drop-content">
+              <div class="file-drop-icon" aria-hidden="true">
+                <svg
+                  class="upload-icon"
+                  width="48"
+                  height="48"
+                  viewBox="0 0 24 24"
+                  fill="none"
+                  stroke="currentColor"
+                  stroke-width="2"
+                >
+                  <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path>
+                  <polyline points="17 8 12 3 7 8"></polyline>
+                  <line x1="12" y1="3" x2="12" y2="15"></line>
+                </svg>
+              </div>
+              <div class="file-drop-text">
+                <p>
+                  音楽ファイルをドラッグ&ドロップ または
+                  <button class="file-select-btn" type="button">ファイルを選択</button>
+                </p>
+              </div>
+            </div>
           </div>
         </section>
 
         <!-- Player Controls -->
         <section class="player-section" id="playerSection" hidden>
-          <!-- File Info -->
-          <div class="file-info" id="fileInfo">
-            <p class="file-name" id="fileName"></p>
-            <button class="file-clear-btn" type="button" aria-label="ファイルをクリア">×</button>
-          </div>
+          <div class="player-top-row">
+            <div class="file-info" id="fileInfo">
+              <p class="file-name" id="fileName"></p>
+              <button class="file-clear-btn" type="button" aria-label="ファイルをクリア">×</button>
+            </div>
 
-          <!-- Play Controls -->
-          <div class="player-controls">
             <button class="play-btn" id="playBtn" aria-label="再生">
               <svg class="play-icon" width="32" height="32" viewBox="0 0 24 24" fill="currentColor">
                 <path d="M8 5v14l11-7z"></path>
               </svg>
-              <svg class="pause-icon" width="32" height="32" viewBox="0 0 24 24" fill="currentColor" hidden>
+              <svg
+                class="pause-icon"
+                width="32"
+                height="32"
+                viewBox="0 0 24 24"
+                fill="currentColor"
+              >
                 <rect x="6" y="4" width="4" height="16"></rect>
                 <rect x="14" y="4" width="4" height="16"></rect>
               </svg>
             </button>
-            
-            <div class="time-display">
+
+            <div class="time-display" aria-live="polite">
               <span id="currentTime">0:00</span> / <span id="duration">0:00</span>
             </div>
-            
+
             <div class="volume-control">
               <button class="mute-btn" id="muteBtn" aria-label="ミュート">
-                <svg class="volume-icon" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <svg
+                  class="volume-icon"
+                  width="24"
+                  height="24"
+                  viewBox="0 0 24 24"
+                  fill="none"
+                  stroke="currentColor"
+                  stroke-width="2"
+                >
                   <polygon points="11 5 6 9 2 9 2 15 6 15 11 19 11 5"></polygon>
-                  <path d="M23 9l-6 6m0-6l6 6" class="mute-path" hidden></path>
+                  <path d="M23 9l-6 6m0-6l6 6" class="mute-path" style="display:none"></path>
                 </svg>
               </button>
-              <input type="range" class="volume-slider" id="volumeSlider" min="0" max="100" value="50" aria-label="音量" />
+              <input
+                type="range"
+                class="volume-slider"
+                id="volumeSlider"
+                min="0"
+                max="100"
+                value="50"
+                aria-label="音量"
+              />
             </div>
           </div>
 
@@ -117,13 +161,42 @@ import '../scripts/app.js';
               <button class="loop-reset-btn" id="loopResetBtn" type="button">ループ解除</button>
               <span>終了: <span id="loopEnd">0:00</span></span>
             </div>
+            <div class="preset-controls" aria-label="ループプリセット">
+              <div class="preset-selection">
+                <label for="presetSelect">プリセット</label>
+                <select
+                  id="presetSelect"
+                  aria-describedby="presetHelp"
+                  aria-label="保存済みプリセット"></select>
+              </div>
+              <div class="preset-actions">
+                <input
+                  type="text"
+                  id="presetNameInput"
+                  placeholder="プリセット名"
+                  aria-label="プリセット名"
+                />
+                <button class="preset-btn" id="presetSaveBtn" type="button">保存</button>
+                <button class="preset-btn" id="presetDeleteBtn" type="button">削除</button>
+                <button class="preset-btn preset-btn-secondary" id="presetResetBtn" type="button"
+                  >リセット</button
+                >
+              </div>
+              <p class="preset-help" id="presetHelp">現在のループと音量を保存して呼び出せます</p>
+            </div>
           </div>
         </section>
       </main>
 
       <!-- Footer -->
       <footer class="app-footer">
-        <p>&copy; 2025 Cadenzio. Built with <a href="https://astro.build" target="_blank" rel="noopener">Astro</a></p>
+        <p>
+          &copy; 2025 Cadenzio. Built with <a
+            href="https://astro.build"
+            target="_blank"
+            rel="noopener">Astro</a
+          >
+        </p>
       </footer>
     </div>
 
@@ -137,7 +210,8 @@ import '../scripts/app.js';
       <div class="modal-content">
         <div class="modal-header">
           <h2>ライセンス情報</h2>
-          <button class="modal-close-btn" id="licenseModalClose" aria-label="閉じる">&times;</button>
+          <button class="modal-close-btn" id="licenseModalClose" aria-label="閉じる">&times;</button
+          >
         </div>
         <div class="modal-body">
           <div class="license-info">
@@ -146,13 +220,23 @@ import '../scripts/app.js';
               <h4>Astro</h4>
               <p><strong>Version:</strong> 5.9.3</p>
               <p><strong>License:</strong> MIT</p>
-              <p><strong>Repository:</strong> <a href="https://github.com/withastro/astro" target="_blank" rel="noopener">https://github.com/withastro/astro</a></p>
+              <p>
+                <strong>Repository:</strong>
+                <a href="https://github.com/withastro/astro" target="_blank" rel="noopener"
+                  >https://github.com/withastro/astro</a
+                >
+              </p>
             </div>
             <div class="license-item">
               <h4>noUiSlider</h4>
               <p><strong>Version:</strong> 15.8.1</p>
               <p><strong>License:</strong> MIT</p>
-              <p><strong>Repository:</strong> <a href="https://github.com/leongersen/noUiSlider" target="_blank" rel="noopener">https://github.com/leongersen/noUiSlider</a></p>
+              <p>
+                <strong>Repository:</strong>
+                <a href="https://github.com/leongersen/noUiSlider" target="_blank" rel="noopener"
+                  >https://github.com/leongersen/noUiSlider</a
+                >
+              </p>
             </div>
             <div class="license-item">
               <h4>Cadenzio</h4>
@@ -165,12 +249,12 @@ import '../scripts/app.js';
       </div>
     </div>
 
-    
     <!-- Service Worker Registration -->
     <script>
       if ('serviceWorker' in navigator) {
         window.addEventListener('load', () => {
-          navigator.serviceWorker.register('/cadenzio/sw.js')
+          navigator.serviceWorker
+            .register('/cadenzio/sw.js')
             .then(registration => console.log('SW registered:', registration))
             .catch(error => console.log('SW registration failed:', error));
         });
@@ -178,4 +262,3 @@ import '../scripts/app.js';
     </script>
   </body>
 </html>
-
