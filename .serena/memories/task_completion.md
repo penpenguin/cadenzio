@@ -1,0 +1,3 @@
+- Practice strict TDD: add the minimal failing Vitest first, implement just enough to pass, then refactor.
+- On completion, ensure `npm run validate` (typecheck + lint + format:check) and targeted tests (`npm run test` or scoped Vitest runs) succeed.
+- Keep changes minimal, document TDD steps and risks in PRs, include UI evidence (screenshots/recordings) for visible changes.

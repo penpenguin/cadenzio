@@ -1,0 +1,9 @@
+- `npm install` — install dependencies.
+- `npm run dev` / `npm run start` — launch Astro dev server on port 4321.
+- `npm run build` then `npm run preview` — build and preview production bundle.
+- `npm run typecheck` — run `astro check` TypeScript analysis.
+- `npm run lint` / `npm run lint:fix` — run ESLint across `.js/.ts/.astro` files.
+- `npm run format:check` / `npm run format` — verify or apply Prettier formatting.
+- `npm run test` / `npm run test:watch` — execute Vitest suite (jsdom-based unit tests).
+- `npm run validate` — run typecheck, lint, and format:check sequentially.
+- `npm run clean` — clear `dist/` and `.astro/` build artifacts.

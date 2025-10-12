@@ -1,0 +1,5 @@
+- Follow Takuto Wada style TDD (Red→Green→Refactor with minimal steps and triangulation) for all changes; write failing tests before fixes.
+- Indent with 2 spaces, keep semicolons, let ESLint/Prettier dictate trailing commas.
+- Naming: classes PascalCase, functions/variables camelCase, shared constants SCREAMING_SNAKE_CASE.
+- Keep Astro templates declarative; centralize browser logic in `src/scripts/` and reuse helpers from `utils.js`.
+- Update shared design tokens in `src/styles/` before changing component colors.

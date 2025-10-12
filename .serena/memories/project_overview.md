@@ -1,0 +1,4 @@
+- Cadenzio is a browser-based web audio loop player built with Astro 5.x that keeps audio processing local for privacy and responsiveness.
+- Frontend uses Astro pages (`src/pages/index.astro`) as a single-page shell with client-side logic in `src/scripts/` (modules such as `AudioEngine`, `UIController`, `WaveformRenderer`, helpers in `utils.js`).
+- Styling tokens live in `src/styles/`; static assets (icons, service worker, manifest) reside under `public/`.
+- TypeScript support is configured via `tsconfig.json` and `env.d.ts`; main configuration in `astro.config.mjs`. 
