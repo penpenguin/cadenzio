@@ -55,8 +55,3 @@ npm run preview
 ## デプロイ
 
 `main` ブランチへのプッシュで GitHub Actions が実行され、Astro の静的ビルドを生成して [GitHub Pages](https://penpenguin.github.io/cadenzio) に自動デプロイします。設定値は `astro.config.mjs` の `site` と `base` にまとめています。
-
-## ライセンス
-
-MIT
-
