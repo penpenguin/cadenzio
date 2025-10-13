@@ -90,10 +90,10 @@ class AudioEngine {
     this.sourceNode.loop = true;
     this.sourceNode.loopStart = this.loopStart;
     this.sourceNode.loopEnd = this.loopEnd;
-    
-    const offset = this.pauseTime % this.duration;
+    const offset = this.calculateLoopOffset();
     this.sourceNode.start(0, offset);
     this.startTime = this.audioContext.currentTime - offset;
+    this.pauseTime = offset;
     
     this.isPlaying = true;
   }
@@ -130,10 +130,12 @@ class AudioEngine {
    * @param {number} time - Time in seconds
    */
   seek(time) {
-    this.pauseTime = Math.max(0, Math.min(this.duration, time));
-    
+    const clamped = Math.max(0, Math.min(this.duration, time));
+    this.pauseTime = clamped;
+
     if (this.isPlaying) {
       this.pause();
+      this.pauseTime = clamped;
       this.play();
     }
   }
@@ -159,6 +161,72 @@ class AudioEngine {
       this.sourceNode.loopStart = start;
       this.sourceNode.loopEnd = end;
     }
+
+    if (!this.isPlaying || !this.audioContext || !this.sourceNode) {
+      return;
+    }
+
+    const hasDuration = Number.isFinite(this.duration) && this.duration > 0;
+    const normalizedStart = Number.isFinite(start) ? Math.max(0, start) : 0;
+    const rawEnd = Number.isFinite(end)
+      ? end
+      : hasDuration
+        ? this.duration
+        : normalizedStart;
+    const normalizedEnd = hasDuration
+      ? Math.max(normalizedStart, Math.min(rawEnd, this.duration))
+      : Math.max(normalizedStart, rawEnd);
+
+    const currentPosition = this.getCurrentTime();
+    const epsilon = 1e-4;
+    const isZeroLengthLoop = Math.abs(normalizedEnd - normalizedStart) <= epsilon;
+    const isOutsideLoop =
+      currentPosition + epsilon < normalizedStart ||
+      currentPosition > normalizedEnd + epsilon ||
+      (isZeroLengthLoop && Math.abs(currentPosition - normalizedStart) > epsilon);
+
+    if (isOutsideLoop) {
+      this.seek(normalizedStart);
+    }
+  }
+
+  /**
+   * Calculate the playback offset constrained within the loop window
+   * @returns {number} Offset in seconds
+   */
+  calculateLoopOffset() {
+    if (!this.duration) {
+      return 0;
+    }
+
+    const normalized =
+      ((this.pauseTime % this.duration) + this.duration) % this.duration;
+    const clampToDuration = value =>
+      Math.min(Math.max(value, 0), this.duration);
+
+    const loopStart = clampToDuration(
+      Number.isFinite(this.loopStart) ? this.loopStart : 0
+    );
+    const loopEnd = clampToDuration(
+      Number.isFinite(this.loopEnd) ? this.loopEnd : this.duration
+    );
+    const loopDuration = Math.max(loopEnd - loopStart, 0);
+
+    if (loopDuration === 0) {
+      return loopStart;
+    }
+
+    const epsilon = 1e-4;
+
+    if (normalized + epsilon < loopStart) {
+      return loopStart;
+    }
+
+    if (normalized > loopEnd - epsilon) {
+      return loopStart;
+    }
+
+    return normalized;
   }
 
   /**

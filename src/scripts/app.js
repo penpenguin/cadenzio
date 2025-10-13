@@ -148,6 +148,7 @@ class CadenzioApp {
       this.ui.setFileName(file.name);
       this.ui.showPlayer();
       this.ui.updateDuration(formatTime(this.audioEngine.duration));
+      this.ui.updatePlayButton(false);
 
       // Setup waveform
       this.waveformRenderer?.resize?.();

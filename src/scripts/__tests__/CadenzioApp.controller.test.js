@@ -8,6 +8,7 @@ const createApp = () => {
   const audioEngine = {
     audioBuffer: {},
     isPlaying: false,
+    loadAudioBuffer: vi.fn().mockResolvedValue({ duration: 1 }),
     play: vi.fn().mockResolvedValue(undefined),
     pause: vi.fn(),
     stop: vi.fn(),
@@ -125,6 +126,27 @@ const createApp = () => {
 };
 
 describe('CadenzioApp controller behaviour', () => {
+  it('resets the play button to paused state after loading a file', async () => {
+    const { app, ui, audioEngine } = createApp();
+    vi.useFakeTimers();
+
+    try {
+      audioEngine.loadAudioBuffer.mockImplementationOnce(async () => {
+        audioEngine.duration = 180;
+        return { duration: 180 };
+      });
+
+      await app.handleFileLoad({ name: 'loop.mp3' }, new ArrayBuffer(8));
+
+      expect(audioEngine.loadAudioBuffer).toHaveBeenCalledTimes(1);
+      expect(ui.updatePlayButton).toHaveBeenCalledWith(false);
+
+      vi.runAllTimers();
+    } finally {
+      vi.useRealTimers();
+    }
+  });
+
   it('hydrates state during initialization', () => {
     const { stateManager } = createApp();
     expect(stateManager.hydrate).toHaveBeenCalledTimes(1);
