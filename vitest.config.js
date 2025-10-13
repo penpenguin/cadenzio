@@ -6,5 +6,6 @@ export default defineConfig({
     globals: true,
     css: false,
     setupFiles: [],
+    pool: 'forks',
   },
 });
