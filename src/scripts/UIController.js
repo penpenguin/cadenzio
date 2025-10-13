@@ -10,6 +10,10 @@ class UIController {
     this.loopSlider = null;
     this.errorToastTimeout = null;
     this.pendingLoopHandles = null;
+    this.lastLoopHandles = null;
+    this.loopSliderRange = null;
+    this.loopHandleSyncId = null;
+    this.lastLoopHandleError = null;
 
     this.initializeElements();
     this.initializeEventListeners();
@@ -206,7 +210,7 @@ class UIController {
 
   // Loop UI methods
   initializeLoopSlider(duration, onUpdate) {
-    if (!this.elements.loopSlider) {
+    if (!this.resolveLoopSliderElement()) {
       console.error('Loop slider element not found');
       return;
     }
@@ -231,6 +235,9 @@ class UIController {
         // Clear any remaining classes
         this.elements.loopSlider.className = '';
         this.elements.loopSlider.setAttribute('id', 'loopSlider');
+        this.lastLoopHandles = null;
+        this.loopSliderRange = null;
+        this.cancelLoopHandleSync();
       } catch (error) {
         console.warn('Error destroying existing slider:', error);
       }
@@ -246,6 +253,11 @@ class UIController {
     // Set initial values to span the entire audio range
     const initialStart = 0; // Start position (0%)
     const initialEnd = duration; // End position (100%)
+
+    this.loopSliderRange = {
+      min: 0,
+      max: duration,
+    };
 
     try {
       const sliderOptions = {
@@ -266,7 +278,7 @@ class UIController {
         ],
         behaviour: 'tap-drag',
         orientation: 'horizontal',
-        margin: 1, // Minimum distance between handles (1 second)
+        margin: 0, // Allow handles to overlap so single-point loops work
         // Explicitly set the number of handles
         handles: 2,
       };
@@ -274,16 +286,33 @@ class UIController {
       noUiSlider.create(this.elements.loopSlider, sliderOptions);
 
       if (this.elements.loopSlider.noUiSlider) {
-        this.elements.loopSlider.noUiSlider.on('update', onUpdate);
-        this.loopSlider = this.elements.loopSlider.noUiSlider;
-        if (this.pendingLoopHandles) {
-          try {
-            this.loopSlider.set(this.pendingLoopHandles);
-          } catch (error) {
-            console.warn('Failed to apply pending loop handles:', error);
+        const sliderInstance = this.elements.loopSlider.noUiSlider;
+        sliderInstance.on('update', values => {
+          const parsed = this.parseHandleValues(values);
+          if (parsed) {
+            this.lastLoopHandles = parsed;
           }
-          this.pendingLoopHandles = null;
+          onUpdate(values);
+        });
+        this.loopSlider = sliderInstance;
+        this.lastLoopHandles = [initialStart, initialEnd];
+        if (this.pendingLoopHandles) {
+          const [pendingStart, pendingEnd] = this.normalizeLoopHandles(
+            this.pendingLoopHandles[0],
+            this.pendingLoopHandles[1]
+          );
+          try {
+            this.loopSlider.set([pendingStart, pendingEnd]);
+            this.lastLoopHandles = [pendingStart, pendingEnd];
+            this.pendingLoopHandles = null;
+            this.cancelLoopHandleSync();
+          } catch (error) {
+            console.warn('Retrying loop slider handles sync:', error);
+            this.pendingLoopHandles = [pendingStart, pendingEnd];
+            this.enqueueLoopHandleSync();
+          }
         }
+        this.flushPendingLoopHandles();
       } else {
         console.error('noUiSlider instance not created');
       }
@@ -311,13 +340,32 @@ class UIController {
     const startInput = container.querySelector('#loopStartRange');
     const endInput = container.querySelector('#loopEndRange');
 
+    this.loopSliderRange = {
+      min: 0,
+      max: Number(duration),
+    };
+
+    this.lastLoopHandles = [0, Number(duration)];
+
     const updateHandler = () => {
       const values = [parseFloat(startInput.value), parseFloat(endInput.value)];
+      this.lastLoopHandles = values;
       onUpdate(values);
     };
 
     startInput.addEventListener('input', updateHandler);
     endInput.addEventListener('input', updateHandler);
+
+    if (this.pendingLoopHandles) {
+      const [pendingStart, pendingEnd] = this.normalizeLoopHandles(
+        this.pendingLoopHandles[0],
+        this.pendingLoopHandles[1]
+      );
+      startInput.value = pendingStart;
+      endInput.value = pendingEnd;
+      this.lastLoopHandles = [pendingStart, pendingEnd];
+      this.pendingLoopHandles = null;
+    }
   }
 
   updateLoopDisplay(startTime, endTime) {
@@ -330,27 +378,93 @@ class UIController {
   }
 
   resetLoopSlider(duration) {
-    if (this.loopSlider) {
+    const numericDuration = Number(duration);
+    if (!Number.isFinite(numericDuration)) {
+      return;
+    }
+
+    if (!this.loopSliderRange) {
+      this.loopSliderRange = {
+        min: 0,
+        max: numericDuration,
+      };
+    }
+
+    const [normalizedStart, normalizedEnd] = this.normalizeLoopHandles(0, numericDuration);
+
+    if (!this.resolveLoopSliderElement()) {
+      this.pendingLoopHandles = [normalizedStart, normalizedEnd];
+      return;
+    }
+
+    if (this.isFallbackSliderActive()) {
+      this.updateFallbackHandles(normalizedStart, normalizedEnd);
+      this.pendingLoopHandles = [normalizedStart, normalizedEnd];
+      return;
+    }
+
+    const sliderInstance = this.elements.loopSlider?.noUiSlider;
+
+    if (sliderInstance && this.loopSlider === sliderInstance) {
       try {
-        this.loopSlider.set([0, duration]);
+        if (this.handlesMatch(normalizedStart, normalizedEnd)) {
+          return;
+        }
+
+        this.loopSlider.set([normalizedStart, normalizedEnd]);
+        this.lastLoopHandles = [normalizedStart, normalizedEnd];
+        this.pendingLoopHandles = null;
+        this.cancelLoopHandleSync();
       } catch (error) {
-        console.error('Failed to reset loop slider:', error);
+        console.warn('Failed to reset loop slider (will retry):', error);
+        this.pendingLoopHandles = [normalizedStart, normalizedEnd];
+        this.enqueueLoopHandleSync();
       }
     } else {
-      this.pendingLoopHandles = [0, duration];
+      this.pendingLoopHandles = [normalizedStart, normalizedEnd];
+      this.enqueueLoopHandleSync();
     }
   }
 
   setLoopHandles(start, end) {
-    if (this.loopSlider) {
-      try {
-        this.loopSlider.set([start, end]);
-      } catch (error) {
-        console.error('Failed to set loop slider handles:', error);
-      }
-    } else {
-      this.pendingLoopHandles = [start, end];
+    const targetStart = Number(start);
+    const targetEnd = Number(end);
+
+    if (!Number.isFinite(targetStart) || !Number.isFinite(targetEnd)) {
+      return;
     }
+
+    if (!this.loopSliderRange) {
+      this.pendingLoopHandles = [targetStart, targetEnd];
+      return;
+    }
+
+    const [normalizedStart, normalizedEnd] = this.normalizeLoopHandles(targetStart, targetEnd);
+
+    if (!this.resolveLoopSliderElement()) {
+      this.pendingLoopHandles = [normalizedStart, normalizedEnd];
+      this.enqueueLoopHandleSync();
+      return;
+    }
+
+    if (this.isFallbackSliderActive()) {
+      this.updateFallbackHandles(normalizedStart, normalizedEnd);
+      this.lastLoopHandles = [normalizedStart, normalizedEnd];
+      this.pendingLoopHandles = [normalizedStart, normalizedEnd];
+      this.lastLoopHandleError = null;
+      this.cancelLoopHandleSync();
+      return;
+    }
+
+    if (this.handlesMatch(normalizedStart, normalizedEnd)) {
+      this.pendingLoopHandles = null;
+      this.lastLoopHandleError = null;
+      this.cancelLoopHandleSync();
+      return;
+    }
+
+    this.pendingLoopHandles = [normalizedStart, normalizedEnd];
+    this.enqueueLoopHandleSync();
   }
 
   // Error handling
@@ -379,6 +493,162 @@ class UIController {
       clearTimeout(this.errorToastTimeout);
       this.errorToastTimeout = null;
     }
+  }
+
+  handlesMatch(targetStart, targetEnd) {
+    if (!Array.isArray(this.lastLoopHandles) || this.lastLoopHandles.length !== 2) {
+      return false;
+    }
+
+    const [currentStart, currentEnd] = this.lastLoopHandles.map(value => Number(value));
+    if (!Number.isFinite(currentStart) || !Number.isFinite(currentEnd)) {
+      return false;
+    }
+
+    const epsilon = 0.001;
+    return (
+      Math.abs(currentStart - targetStart) <= epsilon &&
+      Math.abs(currentEnd - targetEnd) <= epsilon
+    );
+  }
+
+  parseHandleValues(values) {
+    if (!Array.isArray(values) || values.length !== 2) {
+      return null;
+    }
+
+    const parsed = values.map(value => Number(value));
+    return parsed.every(Number.isFinite) ? parsed : null;
+  }
+
+  normalizeLoopHandles(rawStart, rawEnd) {
+    const range = this.loopSliderRange ?? {
+      min: 0,
+      max: Math.max(0, rawStart, rawEnd),
+    };
+
+    const clamp = value => {
+      const numeric = Number(value);
+      if (!Number.isFinite(numeric)) {
+        return range.min;
+      }
+      if (numeric < range.min) {
+        return range.min;
+      }
+      if (numeric > range.max) {
+        return range.max;
+      }
+      return numeric;
+    };
+
+    const clampedStart = clamp(rawStart);
+    const clampedEnd = clamp(rawEnd);
+    const normalizedStart = Math.min(clampedStart, clampedEnd);
+    const normalizedEnd = Math.max(clampedStart, clampedEnd);
+    return [normalizedStart, normalizedEnd];
+  }
+
+  isFallbackSliderActive() {
+    return (
+      !!this.resolveLoopSliderElement() &&
+      !!this.elements.loopSlider.querySelector('.fallback-slider')
+    );
+  }
+
+  updateFallbackHandles(start, end) {
+    if (!this.resolveLoopSliderElement()) {
+      return;
+    }
+
+    const startInput = this.elements.loopSlider.querySelector('#loopStartRange');
+    const endInput = this.elements.loopSlider.querySelector('#loopEndRange');
+
+    if (startInput) {
+      startInput.value = start;
+    }
+    if (endInput) {
+      endInput.value = end;
+    }
+  }
+
+  enqueueLoopHandleSync() {
+    if (!this.pendingLoopHandles) {
+      this.cancelLoopHandleSync();
+      return;
+    }
+
+    if (this.loopHandleSyncId !== null) {
+      return;
+    }
+
+    this.loopHandleSyncId = setTimeout(() => {
+      this.loopHandleSyncId = null;
+      this.flushPendingLoopHandles();
+    }, 0);
+  }
+
+  cancelLoopHandleSync() {
+    if (this.loopHandleSyncId !== null) {
+      clearTimeout(this.loopHandleSyncId);
+      this.loopHandleSyncId = null;
+    }
+  }
+
+  flushPendingLoopHandles() {
+    if (!this.pendingLoopHandles) {
+      this.cancelLoopHandleSync();
+      return;
+    }
+
+    if (!this.resolveLoopSliderElement()) {
+      this.enqueueLoopHandleSync();
+      return;
+    }
+
+    const [pendingStart, pendingEnd] = this.pendingLoopHandles;
+    const [normalizedStart, normalizedEnd] = this.normalizeLoopHandles(pendingStart, pendingEnd);
+
+    if (this.isFallbackSliderActive()) {
+      this.updateFallbackHandles(normalizedStart, normalizedEnd);
+      this.lastLoopHandles = [normalizedStart, normalizedEnd];
+      this.pendingLoopHandles = [normalizedStart, normalizedEnd];
+      return;
+    }
+
+    const sliderInstance = this.elements.loopSlider?.noUiSlider;
+
+    if (sliderInstance && this.loopSlider === sliderInstance) {
+      try {
+        if (!this.handlesMatch(normalizedStart, normalizedEnd)) {
+          this.loopSlider.set([normalizedStart, normalizedEnd]);
+        }
+        this.lastLoopHandles = [normalizedStart, normalizedEnd];
+        this.pendingLoopHandles = null;
+        this.lastLoopHandleError = null;
+        this.cancelLoopHandleSync();
+      } catch (error) {
+        console.warn('Retrying loop slider handles sync:', error);
+        this.lastLoopHandleError = error;
+        this.pendingLoopHandles = [normalizedStart, normalizedEnd];
+        this.enqueueLoopHandleSync();
+      }
+    } else {
+      this.enqueueLoopHandleSync();
+    }
+  }
+
+  resolveLoopSliderElement() {
+    if (this.elements.loopSlider && document.body.contains(this.elements.loopSlider)) {
+      return this.elements.loopSlider;
+    }
+
+    const found = document.getElementById('loopSlider');
+    if (found) {
+      this.elements.loopSlider = found;
+      return this.elements.loopSlider;
+    }
+
+    return null;
   }
 
   // Event listener registration
