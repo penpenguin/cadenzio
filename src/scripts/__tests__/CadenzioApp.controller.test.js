@@ -51,18 +51,6 @@ const createApp = () => {
     onLoopReset: vi.fn(cb => {
       callbacks.loopReset = cb;
     }),
-    onPresetSelect: vi.fn(cb => {
-      callbacks.presetSelect = cb;
-    }),
-    onPresetSave: vi.fn(cb => {
-      callbacks.presetSave = cb;
-    }),
-    onPresetDelete: vi.fn(cb => {
-      callbacks.presetDelete = cb;
-    }),
-    onPresetReset: vi.fn(cb => {
-      callbacks.presetReset = cb;
-    }),
     onKeyboard: vi.fn(cb => {
       callbacks.keyboard = cb;
     }),
@@ -83,10 +71,6 @@ const createApp = () => {
     addDragOverStyle: vi.fn(),
     removeDragOverStyle: vi.fn(),
     clearFileInput: vi.fn(),
-    clearPresetName: vi.fn(),
-    getPresetName: vi.fn(() => 'New Preset'),
-    setPresetOptions: vi.fn(),
-    setPresetNamePlaceholder: vi.fn(),
     showError: vi.fn(),
   };
   const waveformRenderer = {
@@ -105,32 +89,18 @@ const createApp = () => {
     hydrate: vi.fn(() => ({
       loopStart: 0,
       loopEnd: null,
-      presets: [],
-      activePresetId: null,
       volume: 0.5,
       isMuted: false,
     })),
     state: {
       loopStart: 0,
       loopEnd: null,
-      presets: [],
-      activePresetId: null,
       volume: 0.5,
       isMuted: false,
     },
     updateLoop: vi.fn(),
     updateVolume: vi.fn(),
     toggleMute: vi.fn(),
-    resetPresets: vi.fn(),
-    createPreset: vi.fn(() => ({ loopStart: 0, loopEnd: null })),
-    selectPreset: vi.fn(() => ({ loopStart: 1, loopEnd: 2 })),
-    deletePreset: vi.fn(),
-    getActivePreset: vi.fn(() => ({
-      loopStart: 0,
-      loopEnd: null,
-      name: 'Last Session',
-      isMuted: false,
-    })),
   };
 
   const app = new CadenzioApp({
@@ -156,9 +126,8 @@ const createApp = () => {
 
 describe('CadenzioApp controller behaviour', () => {
   it('hydrates state during initialization', () => {
-    const { stateManager, ui } = createApp();
+    const { stateManager } = createApp();
     expect(stateManager.hydrate).toHaveBeenCalledTimes(1);
-    expect(ui.setPresetOptions).toHaveBeenCalledWith([], null);
   });
 
   it('plays and pauses through togglePlayPause', async () => {
@@ -178,11 +147,30 @@ describe('CadenzioApp controller behaviour', () => {
     expect(ui.updatePlayButton).toHaveBeenCalledWith(false);
   });
 
-  it('delegates preset save to the state manager', () => {
-    const { app, stateManager, ui } = createApp();
-    app.handlePresetSave();
-    expect(stateManager.createPreset).toHaveBeenCalledWith({ name: 'New Preset' });
-    expect(ui.clearPresetName).toHaveBeenCalled();
+  it('delegates volume changes to the state manager', () => {
+    const { callbacks, stateManager } = createApp();
+
+    callbacks.volume?.({ target: { value: 0.8 } });
+
+    expect(stateManager.updateVolume).toHaveBeenCalledWith(0.8);
+  });
+
+  it('replays pending loop state after slider initialization', () => {
+    const { app, stateManager } = createApp();
+    const pendingState = { loopStart: 6, loopEnd: 18, volume: 0.5, isMuted: false };
+
+    app.pendingLoopState = pendingState;
+    stateManager.updateLoop.mockClear();
+    app.audioEngine.duration = 120;
+
+    app.handleLoopUpdate([0, 120]);
+
+    expect(stateManager.updateLoop).not.toHaveBeenCalled();
+
+    app.applyPendingLoopState();
+
+    expect(stateManager.updateLoop).toHaveBeenCalledTimes(1);
+    expect(stateManager.updateLoop).toHaveBeenCalledWith(6, 18);
   });
 
   it('surfaces storage errors to the UI', () => {

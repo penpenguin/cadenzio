@@ -34,14 +34,12 @@ describe('index.astro layout structure', () => {
     expect(topRow?.querySelector('.volume-control #volumeSlider')).toBeTruthy();
   });
 
-  it('includes preset management controls with reset actions', () => {
+  it('includes loop information with a reset action', () => {
     const document = loadDocument();
-    const presetControls = document.querySelector('.preset-controls');
-    expect(presetControls).toBeTruthy();
-    expect(presetControls?.querySelector('#presetSelect')).toBeTruthy();
-    expect(presetControls?.querySelector('#presetNameInput')).toBeTruthy();
-    expect(presetControls?.querySelector('#presetSaveBtn')).toBeTruthy();
-    expect(presetControls?.querySelector('#presetDeleteBtn')).toBeTruthy();
-    expect(presetControls?.querySelector('#presetResetBtn')).toBeTruthy();
+    const loopInfo = document.querySelector('.loop-info');
+    expect(loopInfo).toBeTruthy();
+    expect(loopInfo?.querySelector('#loopStart')).toBeTruthy();
+    expect(loopInfo?.querySelector('#loopEnd')).toBeTruthy();
+    expect(loopInfo?.querySelector('#loopResetBtn')).toBeTruthy();
   });
 });

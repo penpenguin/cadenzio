@@ -16,11 +16,9 @@ class PlayerStateManager {
 
   hydrate() {
     const snapshot = this.safeLoad();
-    this.state = this.normalize(snapshot);
-
-    const preset = this.resolveActivePreset(this.state);
-    this.applyPreset(preset);
-
+    const normalized = this.normalize(snapshot);
+    this.state = normalized;
+    this.applyState(normalized);
     return this.state;
   }
 
@@ -38,68 +36,60 @@ class PlayerStateManager {
       return { ...DEFAULT_PREFERENCE_STATE };
     }
 
+    const loopStart =
+      typeof raw.loopStart === 'number' && Number.isFinite(raw.loopStart)
+        ? Math.max(0, raw.loopStart)
+        : DEFAULT_PREFERENCE_STATE.loopStart;
+
+    const hasLoopEnd = typeof raw.loopEnd === 'number' && Number.isFinite(raw.loopEnd);
+    const loopEnd = hasLoopEnd ? Math.max(loopStart, raw.loopEnd) : null;
+
+    const volume =
+      typeof raw.volume === 'number' && Number.isFinite(raw.volume)
+        ? clamp(raw.volume, 0, 1)
+        : DEFAULT_PREFERENCE_STATE.volume;
+
+    const isMuted = typeof raw.isMuted === 'boolean' ? raw.isMuted : DEFAULT_PREFERENCE_STATE.isMuted;
+
     return {
-      loopStart:
-        typeof raw.loopStart === 'number' ? raw.loopStart : DEFAULT_PREFERENCE_STATE.loopStart,
-      loopEnd: typeof raw.loopEnd === 'number' ? raw.loopEnd : DEFAULT_PREFERENCE_STATE.loopEnd,
-      volume:
-        typeof raw.volume === 'number' ? clamp(raw.volume, 0, 1) : DEFAULT_PREFERENCE_STATE.volume,
-      isMuted: typeof raw.isMuted === 'boolean' ? raw.isMuted : DEFAULT_PREFERENCE_STATE.isMuted,
-      presets: Array.isArray(raw.presets) ? raw.presets : [...DEFAULT_PREFERENCE_STATE.presets],
-      activePresetId: raw.activePresetId ?? DEFAULT_PREFERENCE_STATE.activePresetId,
+      loopStart,
+      loopEnd,
+      volume,
+      isMuted,
       schemaVersion: raw.schemaVersion ?? STORAGE_SCHEMA.VERSION,
     };
   }
 
-  resolveActivePreset(state) {
-    if (!state.presets || state.presets.length === 0) {
-      return this.fallbackPresetFromState(state);
+  applyState(target) {
+    const loopStart =
+      typeof target.loopStart === 'number' && Number.isFinite(target.loopStart)
+        ? Math.max(0, target.loopStart)
+        : 0;
+
+    const durationCandidate = Number(this.audioEngine?.duration);
+    const hasDuration = Number.isFinite(durationCandidate) && durationCandidate > 0;
+
+    const hasLoopEnd = typeof target.loopEnd === 'number' && Number.isFinite(target.loopEnd);
+    let loopEnd = hasLoopEnd ? Math.max(loopStart, target.loopEnd) : null;
+
+    if (loopEnd === null) {
+      loopEnd = hasDuration ? Math.max(loopStart, durationCandidate) : loopStart;
+    } else if (hasDuration) {
+      loopEnd = Math.max(loopStart, Math.min(loopEnd, durationCandidate));
     }
 
-    const match = state.presets.find(preset => preset.id === state.activePresetId);
-
-    if (match) {
-      return this.fallbackPresetFromState({
-        ...state,
-        loopStart: match.loopStart,
-        loopEnd: match.loopEnd,
-        volume: match.volume,
-        isMuted: match.isMuted,
-      });
-    }
-
-    return this.fallbackPresetFromState({
-      ...state,
-      loopStart: state.presets[0].loopStart,
-      loopEnd: state.presets[0].loopEnd,
-      volume: state.presets[0].volume,
-      isMuted: state.presets[0].isMuted,
-      activePresetId: state.presets[0].id,
-    });
-  }
-
-  fallbackPresetFromState(state) {
-    return {
-      loopStart: typeof state.loopStart === 'number' ? state.loopStart : 0,
-      loopEnd: typeof state.loopEnd === 'number' ? state.loopEnd : null,
-      volume:
-        typeof state.volume === 'number' ? clamp(state.volume, 0, 1) : AUDIO_CONFIG.DEFAULT_VOLUME,
-      isMuted: !!state.isMuted,
-    };
-  }
-
-  applyPreset(preset) {
-    const loopStart = preset.loopStart ?? 0;
-    const loopEnd = preset.loopEnd ?? preset.loopStart ?? 0;
-    const volume = clamp(preset.volume ?? AUDIO_CONFIG.DEFAULT_VOLUME, 0, 1);
-    const isMuted = !!preset.isMuted;
+    const resolvedVolume =
+      typeof target.volume === 'number' && Number.isFinite(target.volume)
+        ? clamp(target.volume, 0, 1)
+        : AUDIO_CONFIG.DEFAULT_VOLUME;
+    const isMuted = !!target.isMuted;
 
     if (this.audioEngine?.setLoopPoints) {
       this.audioEngine.setLoopPoints(loopStart, loopEnd);
     }
 
     if (this.audioEngine?.setVolume) {
-      this.audioEngine.setVolume(isMuted ? 0 : volume);
+      this.audioEngine.setVolume(isMuted ? 0 : resolvedVolume);
     }
 
     if (this.ui?.setLoopHandles) {
@@ -111,7 +101,7 @@ class PlayerStateManager {
     }
 
     if (this.ui?.updateVolumeSlider) {
-      this.ui.updateVolumeSlider(volume);
+      this.ui.updateVolumeSlider(resolvedVolume);
     }
 
     if (this.ui?.updateMuteButton) {
@@ -120,179 +110,60 @@ class PlayerStateManager {
   }
 
   updateLoop(loopStart, loopEnd) {
-    const normalizedStart = typeof loopStart === 'number' ? loopStart : this.state.loopStart;
-    const normalizedEnd = typeof loopEnd === 'number' ? loopEnd : this.state.loopEnd;
+    const hasDesiredStart = typeof loopStart === 'number' && Number.isFinite(loopStart);
+    const fallbackStart =
+      typeof this.state.loopStart === 'number' && Number.isFinite(this.state.loopStart)
+        ? Math.max(0, this.state.loopStart)
+        : 0;
+    const normalizedStart = hasDesiredStart ? Math.max(0, loopStart) : fallbackStart;
 
-    const nextState = {
+    const hasDesiredEnd = typeof loopEnd === 'number' && Number.isFinite(loopEnd);
+    const hasFallbackEnd =
+      typeof this.state.loopEnd === 'number' && Number.isFinite(this.state.loopEnd);
+    let normalizedEnd = hasDesiredEnd
+      ? Math.max(normalizedStart, loopEnd)
+      : hasFallbackEnd
+        ? Math.max(normalizedStart, this.state.loopEnd)
+        : null;
+
+    if (!(typeof normalizedEnd === 'number' && Number.isFinite(normalizedEnd))) {
+      normalizedEnd = null;
+    }
+
+    const saved = this.persist({
       ...this.state,
       loopStart: normalizedStart,
       loopEnd: normalizedEnd,
-      presets: this.state.presets.map(preset =>
-        preset.id === this.state.activePresetId
-          ? {
-              ...preset,
-              loopStart: normalizedStart,
-              loopEnd: normalizedEnd,
-            }
-          : preset
-      ),
-    };
-
-    this.persist(nextState);
-    this.applyPreset({
-      loopStart: normalizedStart,
-      loopEnd: normalizedEnd,
-      volume: this.state.volume,
-      isMuted: this.state.isMuted,
     });
+
+    this.applyState(saved);
   }
 
   updateVolume(volume) {
-    const clampedVolume = clamp(volume, 0, 1);
+    const numericVolume = Number.parseFloat(volume);
+    const clampedVolume = Number.isFinite(numericVolume)
+      ? clamp(numericVolume, 0, 1)
+      : this.state.volume;
+
     const nextState = {
       ...this.state,
       volume: clampedVolume,
       isMuted: clampedVolume === 0 ? this.state.isMuted : false,
-      presets: this.state.presets.map(preset =>
-        preset.id === this.state.activePresetId
-          ? {
-              ...preset,
-              volume: clampedVolume,
-              isMuted: clampedVolume === 0 ? preset.isMuted : false,
-            }
-          : preset
-      ),
     };
 
-    this.persist(nextState);
-    this.applyPreset({
-      loopStart: this.state.loopStart,
-      loopEnd: this.state.loopEnd,
-      volume: this.state.volume,
-      isMuted: this.state.isMuted,
-    });
-  }
-
-  resetPresets() {
-    const resetState = {
-      ...DEFAULT_PREFERENCE_STATE,
-      schemaVersion: STORAGE_SCHEMA.VERSION,
-    };
-
-    this.persist(resetState);
-    this.applyPreset({
-      loopStart: this.state.loopStart,
-      loopEnd: this.state.loopEnd,
-      volume: this.state.volume,
-      isMuted: this.state.isMuted,
-    });
+    const saved = this.persist(nextState);
+    this.applyState(saved);
   }
 
   toggleMute() {
     const nextMuted = !this.state.isMuted;
-    const nextState = {
+    const saved = this.persist({
       ...this.state,
       isMuted: nextMuted,
-      presets: this.state.presets.map(preset =>
-        preset.id === this.state.activePresetId
-          ? {
-              ...preset,
-              isMuted: nextMuted,
-            }
-          : preset
-      ),
-    };
-
-    this.persist(nextState);
-    this.applyPreset({
-      loopStart: this.state.loopStart,
-      loopEnd: this.state.loopEnd,
-      volume: this.state.volume,
-      isMuted: this.state.isMuted,
     });
-  }
 
-  createPreset({ name, loopStart, loopEnd, volume, isMuted } = {}) {
-    const id = this.generatePresetId();
-    const preset = {
-      id,
-      name: name && name.length > 0 ? name : `Preset ${this.state.presets.length + 1}`,
-      loopStart: typeof loopStart === 'number' ? loopStart : this.state.loopStart,
-      loopEnd: typeof loopEnd === 'number' ? loopEnd : this.state.loopEnd,
-      volume: typeof volume === 'number' ? clamp(volume, 0, 1) : this.state.volume,
-      isMuted: typeof isMuted === 'boolean' ? isMuted : this.state.isMuted,
-    };
-
-    const nextState = {
-      ...this.state,
-      loopStart: preset.loopStart,
-      loopEnd: preset.loopEnd,
-      volume: preset.volume,
-      isMuted: preset.isMuted,
-      activePresetId: id,
-      presets: [...this.state.presets.filter(candidate => candidate.id !== id), preset],
-    };
-
-    this.persist(nextState);
-    this.applyPreset(preset);
-    return preset;
-  }
-
-  selectPreset(presetId) {
-    const preset = this.state.presets.find(candidate => candidate.id === presetId);
-    if (!preset) {
-      return null;
-    }
-
-    const nextState = {
-      ...this.state,
-      loopStart: preset.loopStart,
-      loopEnd: preset.loopEnd,
-      volume: preset.volume,
-      isMuted: preset.isMuted,
-      activePresetId: presetId,
-    };
-
-    this.persist(nextState);
-    this.applyPreset(preset);
-    return preset;
-  }
-
-  deletePreset(presetId) {
-    const remaining = this.state.presets.filter(preset => preset.id !== presetId);
-
-    if (remaining.length === 0) {
-      this.resetPresets();
-      return this.state;
-    }
-
-    const nextActive =
-      remaining.find(preset => preset.id === this.state.activePresetId) ?? remaining[0];
-
-    const nextState = {
-      ...this.state,
-      presets: remaining,
-      activePresetId: nextActive.id,
-      loopStart: nextActive.loopStart,
-      loopEnd: nextActive.loopEnd,
-      volume: nextActive.volume,
-      isMuted: nextActive.isMuted,
-    };
-
-    this.persist(nextState);
-    this.applyPreset(nextActive);
-    return this.state;
-  }
-
-  generatePresetId() {
-    if (typeof crypto !== 'undefined' && typeof crypto.randomUUID === 'function') {
-      return crypto.randomUUID();
-    }
-    return `preset-${Date.now().toString(36)}-${Math.random().toString(36).slice(2, 8)}`;
-  }
-
-  getActivePreset() {
-    return this.resolveActivePreset(this.state);
+    this.applyState(saved);
+    return nextMuted;
   }
 
   persist(nextState) {

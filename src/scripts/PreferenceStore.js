@@ -5,8 +5,6 @@ const DEFAULT_STATE = Object.freeze({
   loopEnd: null,
   volume: AUDIO_CONFIG.DEFAULT_VOLUME,
   isMuted: false,
-  presets: [],
-  activePresetId: null,
   schemaVersion: STORAGE_SCHEMA.VERSION,
 });
 
@@ -58,8 +56,6 @@ class PreferenceStore {
       loopEnd: typeof state.loopEnd === 'number' ? state.loopEnd : DEFAULT_STATE.loopEnd,
       volume: typeof state.volume === 'number' ? state.volume : DEFAULT_STATE.volume,
       isMuted: typeof state.isMuted === 'boolean' ? state.isMuted : DEFAULT_STATE.isMuted,
-      presets: Array.isArray(state.presets) ? state.presets : [...DEFAULT_STATE.presets],
-      activePresetId: state.activePresetId ?? DEFAULT_STATE.activePresetId,
       schemaVersion: STORAGE_SCHEMA.VERSION,
     };
   }

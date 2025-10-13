@@ -82,7 +82,6 @@ class CadenzioApp {
 
       const hydratedState = this.stateManager.hydrate();
       this.pendingLoopState = hydratedState;
-      this.refreshPresetUI();
 
       this.isInitialized = true;
     } catch (error) {
@@ -114,10 +113,6 @@ class CadenzioApp {
 
     // Loop controls
     this.ui.onLoopReset(() => this.resetLoop());
-    this.ui.onPresetSelect(e => this.handlePresetSelect(e));
-    this.ui.onPresetSave(() => this.handlePresetSave());
-    this.ui.onPresetDelete(() => this.handlePresetDelete());
-    this.ui.onPresetReset(() => this.handlePresetReset());
 
     // Keyboard shortcuts
     this.ui.onKeyboard(e => this.handleKeyboard(e));
@@ -203,6 +198,10 @@ class CadenzioApp {
       return;
     }
 
+    if (this.pendingLoopState) {
+      return;
+    }
+
     const duration = this.audioEngine.duration || 0;
     const rawStart = parseFloat(values[0]);
     const rawEnd = parseFloat(values[1]);
@@ -213,7 +212,6 @@ class CadenzioApp {
     this.stateManager.updateLoop(loopStart, loopEnd);
     this.waveformRenderer?.updateLoopRegion?.(loopStart, loopEnd);
     this.pendingLoopState = null;
-    this.refreshPresetUI();
   }
 
   /**
@@ -228,7 +226,6 @@ class CadenzioApp {
     this.ui.clearFileInput();
     this.ui.updatePlayButton(false);
     this.waveformRenderer?.hidePlayhead?.();
-    this.refreshPresetUI();
   }
 
   /**
@@ -319,66 +316,6 @@ class CadenzioApp {
       this.stateManager.updateLoop(0, duration);
       this.waveformRenderer.updateLoopRegion(0, duration);
     }
-  }
-
-  handlePresetSave() {
-    const name = this.ui.getPresetName();
-    const preset = this.stateManager.createPreset({ name });
-    this.ui.clearPresetName();
-    this.refreshPresetUI();
-    if (preset) {
-      this.updateWaveformLoop(preset.loopStart, preset.loopEnd);
-    }
-  }
-
-  handlePresetSelect(event) {
-    const presetId = event?.target?.value;
-    if (!presetId) {
-      return;
-    }
-
-    const preset = this.stateManager.selectPreset(presetId);
-    this.refreshPresetUI();
-    if (preset) {
-      this.updateWaveformLoop(preset.loopStart, preset.loopEnd);
-    }
-  }
-
-  handlePresetDelete() {
-    const activeId = this.stateManager.state.activePresetId;
-    if (!activeId) {
-      return;
-    }
-
-    this.stateManager.deletePreset(activeId);
-    this.refreshPresetUI();
-    const preset = this.stateManager.getActivePreset();
-    this.updateWaveformLoop(preset.loopStart, preset.loopEnd);
-  }
-
-  handlePresetReset() {
-    this.stateManager.resetPresets();
-    this.refreshPresetUI();
-    const preset = this.stateManager.getActivePreset();
-    this.updateWaveformLoop(preset.loopStart, preset.loopEnd);
-    this.ui.clearPresetName();
-  }
-
-  refreshPresetUI() {
-    if (!this.ui.setPresetOptions) {
-      return;
-    }
-
-    const { presets, activePresetId } = this.stateManager.state;
-    this.ui.setPresetOptions(presets, activePresetId);
-    const activePreset = this.stateManager.getActivePreset();
-    this.ui.setPresetNamePlaceholder(activePreset?.name ?? 'プリセット名');
-  }
-
-  updateWaveformLoop(loopStart, loopEnd) {
-    const duration = this.audioEngine.duration || loopEnd || loopStart || 0;
-    const resolvedEnd = typeof loopEnd === 'number' ? loopEnd : duration;
-    this.waveformRenderer.updateLoopRegion(loopStart ?? 0, resolvedEnd);
   }
 
   /**

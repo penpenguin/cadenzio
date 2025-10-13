@@ -106,11 +106,9 @@ export const STORAGE_SCHEMA = {
   FIELDS: {
     LOOP_START: 'loopStart',
     LOOP_END: 'loopEnd',
-    PRESET_NAME: 'name',
     VOLUME: 'volume',
     IS_MUTED: 'isMuted',
   },
-  DEFAULT_PRESET_NAME: 'Last Session',
 };
 
 // Development Configuration

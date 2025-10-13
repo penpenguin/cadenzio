@@ -34,8 +34,8 @@ describe('PreferenceStore', () => {
     expect(state.loopEnd).toBe(null);
     expect(state.volume).toBe(AUDIO_CONFIG.DEFAULT_VOLUME);
     expect(state.isMuted).toBe(false);
-    expect(state.presets).toEqual([]);
-    expect(state.activePresetId).toBe(null);
+    expect(state).not.toHaveProperty('presets');
+    expect(state).not.toHaveProperty('activePresetId');
   });
 
   it('persists sanitized state when save is called', () => {
@@ -45,23 +45,14 @@ describe('PreferenceStore', () => {
       loopEnd: 12.3,
       volume: 0.9,
       isMuted: true,
-      presets: [
-        {
-          id: 'abc',
-          name: 'Warmup',
-          loopStart: 1.5,
-          loopEnd: 12.3,
-          volume: 0.9,
-          isMuted: true,
-        },
-      ],
-      activePresetId: 'abc',
     };
 
     store.save(payload);
 
     const stored = JSON.parse(storage.getItem(STORAGE_KEYS.PLAYER_STATE));
     expect(stored).toMatchObject(payload);
+    expect(stored).not.toHaveProperty('presets');
+    expect(stored).not.toHaveProperty('activePresetId');
   });
 
   it('surfaces storage errors when setItem throws', () => {

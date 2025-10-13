@@ -49,11 +49,6 @@ class UIController {
     this.elements.loopStartEl = document.getElementById('loopStart');
     this.elements.loopEndEl = document.getElementById('loopEnd');
     this.elements.loopResetBtn = document.getElementById('loopResetBtn');
-    this.elements.presetSelect = document.getElementById('presetSelect');
-    this.elements.presetNameInput = document.getElementById('presetNameInput');
-    this.elements.presetSaveBtn = document.getElementById('presetSaveBtn');
-    this.elements.presetDeleteBtn = document.getElementById('presetDeleteBtn');
-    this.elements.presetResetBtn = document.getElementById('presetResetBtn');
 
     // Error elements
     this.elements.errorToast = document.getElementById('errorToast');
@@ -709,79 +704,6 @@ class UIController {
   onLoopReset(callback) {
     if (this.elements.loopResetBtn) {
       this.elements.loopResetBtn.addEventListener('click', callback);
-    }
-  }
-
-  onPresetSelect(callback) {
-    if (this.elements.presetSelect) {
-      this.elements.presetSelect.addEventListener('change', callback);
-    }
-  }
-
-  onPresetSave(callback) {
-    if (this.elements.presetSaveBtn) {
-      this.elements.presetSaveBtn.addEventListener('click', callback);
-    }
-  }
-
-  onPresetDelete(callback) {
-    if (this.elements.presetDeleteBtn) {
-      this.elements.presetDeleteBtn.addEventListener('click', callback);
-    }
-  }
-
-  onPresetReset(callback) {
-    if (this.elements.presetResetBtn) {
-      this.elements.presetResetBtn.addEventListener('click', callback);
-    }
-  }
-
-  setPresetOptions(presets, activePresetId) {
-    if (!this.elements.presetSelect) return;
-
-    this.elements.presetSelect.innerHTML = '';
-
-    if (!presets || presets.length === 0) {
-      const option = document.createElement('option');
-      option.value = '';
-      option.textContent = 'プリセットなし';
-      this.elements.presetSelect.appendChild(option);
-      this.elements.presetSelect.value = '';
-      return;
-    }
-
-    presets.forEach(preset => {
-      const option = document.createElement('option');
-      option.value = preset.id;
-      option.textContent = preset.name;
-      this.elements.presetSelect.appendChild(option);
-    });
-
-    this.elements.presetSelect.value = activePresetId ?? presets[0]?.id ?? '';
-  }
-
-  setPresetName(name) {
-    if (this.elements.presetNameInput) {
-      this.elements.presetNameInput.value = name ?? '';
-    }
-  }
-
-  getPresetName() {
-    if (this.elements.presetNameInput) {
-      return this.elements.presetNameInput.value.trim();
-    }
-    return '';
-  }
-
-  clearPresetName() {
-    if (this.elements.presetNameInput) {
-      this.elements.presetNameInput.value = '';
-    }
-  }
-
-  setPresetNamePlaceholder(name) {
-    if (this.elements.presetNameInput) {
-      this.elements.presetNameInput.placeholder = name ?? 'プリセット名';
     }
   }
 
