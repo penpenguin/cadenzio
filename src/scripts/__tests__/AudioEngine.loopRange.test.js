@@ -131,4 +131,25 @@ describe('AudioEngine loop boundaries', () => {
     expect(firstSource.loopStart).toBe(10);
     expect(firstSource.loopEnd).toBe(40);
   });
+
+  it('reports current time wrapped inside the loop window during playback', async () => {
+    const engine = new AudioEngine();
+    await engine.loadAudioBuffer(new ArrayBuffer(8));
+
+    const loopStart = 12;
+    const loopEnd = 24;
+    const loopDuration = loopEnd - loopStart;
+
+    engine.setLoopPoints(loopStart, loopEnd);
+    engine.pauseTime = loopStart;
+
+    await engine.play();
+
+    const expectedElapsedInsideLoop = 2;
+    const wrappedDistance = loopStart + loopDuration + expectedElapsedInsideLoop;
+
+    audioContextMock.currentTime = engine.startTime + wrappedDistance;
+
+    expect(engine.getCurrentTime()).toBeCloseTo(loopStart + expectedElapsedInsideLoop, 5);
+  });
 });

@@ -177,7 +177,7 @@ class AudioEngine {
       ? Math.max(normalizedStart, Math.min(rawEnd, this.duration))
       : Math.max(normalizedStart, rawEnd);
 
-    const currentPosition = this.getCurrentTime();
+    const currentPosition = this.getCurrentTime({ ignoreLoopBounds: true });
     const epsilon = 1e-4;
     const isZeroLengthLoop = Math.abs(normalizedEnd - normalizedStart) <= epsilon;
     const isOutsideLoop =
@@ -260,9 +260,38 @@ class AudioEngine {
    * Get current playback time
    * @returns {number} Current time in seconds
    */
-  getCurrentTime() {
-    if (this.isPlaying && this.sourceNode) {
-      return (this.audioContext.currentTime - this.startTime) % this.duration;
+  getCurrentTime({ ignoreLoopBounds = false } = {}) {
+    if (this.isPlaying && this.sourceNode && this.audioContext) {
+      const raw = this.audioContext.currentTime - this.startTime;
+
+      if (!Number.isFinite(this.duration) || this.duration <= 0) {
+        return raw;
+      }
+
+      const normalizedTrackTime = ((raw % this.duration) + this.duration) % this.duration;
+
+      if (ignoreLoopBounds) {
+        return normalizedTrackTime;
+      }
+
+      const clampToDuration = value =>
+        Math.min(Math.max(Number.isFinite(value) ? value : 0, 0), this.duration);
+
+      const loopStart = clampToDuration(this.loopStart);
+      const loopEnd = clampToDuration(
+        Math.max(loopStart, Number.isFinite(this.loopEnd) ? this.loopEnd : this.duration)
+      );
+      const loopSpan = Math.max(loopEnd - loopStart, 0);
+      const epsilon = 1e-4;
+
+      if (loopSpan <= epsilon) {
+        return loopStart;
+      }
+
+      const relativeProgress = ((normalizedTrackTime - loopStart) % loopSpan + loopSpan) % loopSpan;
+      const wrapped = loopStart + relativeProgress;
+
+      return clampToDuration(wrapped);
     }
     return this.pauseTime;
   }

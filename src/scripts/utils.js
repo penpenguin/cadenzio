@@ -230,6 +230,6 @@ export function debouncedRaf(callback) {
 export function debugLog(message, ...args) {
   if (process.env.NODE_ENV === 'development') {
     const timestamp = new Date().toISOString();
-    console.log(`[${timestamp}] ${message}`, ...args);
+    console.debug(`[${timestamp}] ${message}`, ...args);
   }
 }
